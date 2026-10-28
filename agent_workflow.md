@@ -1,24 +1,24 @@
-# Regras Globais de Fluxo de Trabalho (Agent Workflow)
+# Global Workflow Rules (Agent Workflow)
 
-Você, como Desenvolvedor Autônomo, DEVE seguir estritamente este fluxo do Git para QUALQUER alteração ou nova etapa solicitada no código, antes de começar a programar:
+As an Autonomous Developer, you MUST strictly follow this Git workflow for ANY code changes or new features requested, before writing any code:
 
 1. **Branching:**
-   - NUNCA codifique diretamente na branch `master` ou `main`.
-   - Antes de escrever qualquer código, crie e faça checkout para uma nova branch.
-   - Padrão de nomenclatura: `feature/etapa-X-nome-curto` ou `fix/nome-do-bug`.
+   - NEVER code directly on the `master` or `main` branch.
+   - Before writing code, create and checkout a new branch.
+   - Naming convention: `feature/phase-X-short-name` or `fix/bug-name`.
 
-2. **Desenvolvimento e Validação:**
-   - Escreva o código solicitado.
-   - Garanta que o projeto compila sem erros antes de commitar (use `dotnet build`).
+2. **Development & Validation:**
+   - Write the requested code.
+   - Ensure the project compiles without errors before committing (run `dotnet build`).
 
 3. **Commits:**
-   - Faça commits lógicos e granulares.
-   - Use Conventional Commits (ex: `feat: adiciona caso de uso AnalyzeDrawing`, `fix: corrige injeção de dependência`).
+   - Make logical, granular commits.
+   - Use Conventional Commits (e.g., `feat: add AnalyzeDrawing use case`, `fix: resolve dependency injection error`).
 
-4. **Push e Pull Request:**
-   - Faça o push da branch para o repositório remoto (`git push -u origin nome-da-branch`).
-   - Se você tiver acesso ao CLI do GitHub (`gh`), crie o Pull Request via terminal para a branch `master`. 
-   - Caso não tenha o CLI, deixe a branch no repositório remoto e avise o usuário para abrir o PR manualmente.
+4. **Push & Pull Request:**
+   - Push the branch to the remote repository (`git push -u origin <branch-name>`).
+   - If you have access to the GitHub CLI (`gh`), create a Pull Request to the `master` branch via terminal.
+   - If the CLI is not available, leave the branch in the remote repository and notify the user to open the PR manually.
 
-5. **Aprovação:**
-   - O merge na `master` será feito pelo usuário (code review). Não faça merge por conta própria.
+5. **Approval:**
+   - Merging into `master` will be done by the user (code review). Do not merge on your own.
