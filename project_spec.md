@@ -19,7 +19,7 @@ The solution must be strictly divided into:
 - `DrawingVerifier.UI`: WPF project, Views, ViewModels, and App.xaml.cs configuration (DI Container).
 
 ## 4. Business Flow
-1. The user selects a "Skill" (Client Profile, e.g., Relco).
+1. The user selects a "Skill" (Client Profile, e.g., BHP Group).
 2. The user loads `N` PDF files.
 3. The system sends each PDF to Gemini, injecting the JSON Schema tied to the selected Skill.
 4. The system receives the JSON responses, loads them into the Domain, and iterates over the validation rules (e.g., overmetal rules).
