@@ -5,6 +5,7 @@ using System.IO;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DrawingVerifier.Application.DTOs;
+using DrawingVerifier.Application.Interfaces;
 using DrawingVerifier.Application.UseCases;
 using DrawingVerifier.Domain.Entities;
 using DrawingVerifier.Domain.Interfaces;
@@ -12,8 +13,11 @@ using Microsoft.Win32;
 
 public partial class MainViewModel : ObservableObject
 {
+    private const string ReportFileName = "VerificationReport.pdf";
+
     private readonly ISkillRepository _skillRepository;
     private readonly AnalyzeDrawingUseCase _analyzeDrawingUseCase;
+    private readonly IReportGenerator _reportGenerator;
 
     [ObservableProperty]
     private ObservableCollection<VerificationSkill> _skills = [];
@@ -33,10 +37,14 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string _statusMessage = "Ready.";
 
-    public MainViewModel(ISkillRepository skillRepository, AnalyzeDrawingUseCase analyzeDrawingUseCase)
+    public MainViewModel(
+        ISkillRepository skillRepository,
+        AnalyzeDrawingUseCase analyzeDrawingUseCase,
+        IReportGenerator reportGenerator)
     {
         _skillRepository = skillRepository ?? throw new ArgumentNullException(nameof(skillRepository));
         _analyzeDrawingUseCase = analyzeDrawingUseCase ?? throw new ArgumentNullException(nameof(analyzeDrawingUseCase));
+        _reportGenerator = reportGenerator ?? throw new ArgumentNullException(nameof(reportGenerator));
     }
 
     [RelayCommand]
@@ -154,7 +162,9 @@ public partial class MainViewModel : ObservableObject
             }
 
             var validCount = Reports.Count(r => r.IsValid);
-            StatusMessage = $"Verification completed. {validCount}/{Reports.Count} passed.";
+            var summary = $"Verification completed. {validCount}/{Reports.Count} passed.";
+
+            await GenerateReportAsync(summary);
         }
         catch (Exception ex)
         {
@@ -163,6 +173,29 @@ public partial class MainViewModel : ObservableObject
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    private async Task GenerateReportAsync(string summary)
+    {
+        var outputPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
+            ReportFileName);
+
+        StatusMessage = $"{summary} Generating PDF report...";
+
+        try
+        {
+            // Snapshot the collection and render off the UI thread to keep the window responsive.
+            var reportsSnapshot = Reports.ToList();
+            await Task.Run(() => _reportGenerator.GeneratePdfReport(reportsSnapshot, outputPath));
+
+            StatusMessage = $"{summary} Report saved to Desktop: {outputPath}";
+        }
+        catch (Exception ex)
+        {
+            // Report failures (e.g., the file is locked by a PDF viewer) must not hide the verification results.
+            StatusMessage = $"{summary} Failed to save PDF report: {ex.Message}";
         }
     }
 }
