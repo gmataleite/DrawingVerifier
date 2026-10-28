@@ -1,12 +1,11 @@
 namespace DrawingVerifier.Infrastructure.Gemini;
 
-using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using DrawingVerifier.Application.Interfaces;
 using DrawingVerifier.Domain.Entities;
 using DrawingVerifier.Domain.Interfaces;
-using Microsoft.Extensions.Configuration;
 
 /// <summary>
 /// HTTP client for the Google Gemini (1.5 Pro) API, used for multimodal analysis of engineering PDFs.
@@ -17,12 +16,12 @@ public class GeminiApiHttpClient : IGeminiApiService
         "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent";
 
     private readonly HttpClient _httpClient;
-    private readonly IConfiguration _configuration;
+    private readonly ISettingsService _settingsService;
 
-    public GeminiApiHttpClient(HttpClient httpClient, IConfiguration configuration)
+    public GeminiApiHttpClient(HttpClient httpClient, ISettingsService settingsService)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
     }
 
     public async Task<ExtractedDrawingData> AnalyzeDrawingAsync(
@@ -33,9 +32,14 @@ public class GeminiApiHttpClient : IGeminiApiService
         ArgumentException.ThrowIfNullOrWhiteSpace(pdfBase64);
         ArgumentNullException.ThrowIfNull(skill);
 
-        var apiKey = GetApiKey();
-        var endpoint = GetEndpoint();
-        var requestUri = $"{endpoint}?key={apiKey}";
+        var apiKey = _settingsService.GetApiKey();
+        if (string.IsNullOrWhiteSpace(apiKey))
+        {
+            throw new InvalidOperationException(
+                "Gemini API Key is not configured. Please configure it in Settings.");
+        }
+
+        var requestUri = $"{DefaultGeminiEndpoint}?key={apiKey}";
 
         // 1. Map generationConfig with response_mime_type and response_schema
         var generationConfig = new Dictionary<string, object?>
@@ -116,31 +120,6 @@ public class GeminiApiHttpClient : IGeminiApiService
         var extractedData = JsonSerializer.Deserialize<ExtractedDrawingData>(extractedJson, serializerOptions);
 
         return extractedData ?? new ExtractedDrawingData();
-    }
-
-    private string GetApiKey()
-    {
-        var apiKey = _configuration["Gemini:ApiKey"]
-                     ?? _configuration["GEMINI_API_KEY"]
-                     ?? _configuration["GeminiApiKey"]
-                     ?? _configuration["Gemini:Key"]
-                     ?? Environment.GetEnvironmentVariable("GEMINI_API_KEY");
-
-        if (string.IsNullOrWhiteSpace(apiKey))
-        {
-            throw new InvalidOperationException(
-                "Gemini API key is not configured. Please define 'Gemini:ApiKey' or the environment variable 'GEMINI_API_KEY'.");
-        }
-
-        return apiKey;
-    }
-
-    private string GetEndpoint()
-    {
-        var configuredEndpoint = _configuration["Gemini:Endpoint"];
-        return !string.IsNullOrWhiteSpace(configuredEndpoint)
-            ? configuredEndpoint
-            : DefaultGeminiEndpoint;
     }
 
     private static string ExtractJsonTextFromResponse(string responseBody)
