@@ -1,0 +1,90 @@
+<Window x:Class="DrawingVerifier.UI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:viewmodels="clr-namespace:DrawingVerifier.UI.ViewModels"
+        d:DataContext="{d:DesignInstance Type=viewmodels:MainViewModel}"
+        mc:Ignorable="d"
+        Title="Drawing Verifier"
+        Height="600"
+        Width="900"
+        WindowStartupLocation="CenterScreen">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="2*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Top Controls: Skill Selection & Add PDFs -->
+        <Grid Grid.Row="0" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="260" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Grid.Column="0"
+                       Text="Verification Skill:"
+                       VerticalAlignment="Center"
+                       Margin="0,0,8,0" />
+
+            <ComboBox Grid.Column="1"
+                      ItemsSource="{Binding Skills}"
+                      SelectedItem="{Binding SelectedSkill}"
+                      DisplayMemberPath="Name"
+                      VerticalContentAlignment="Center"
+                      Height="28" />
+
+            <Button Grid.Column="2"
+                    Content="Refresh Skills"
+                    Command="{Binding LoadSkillsCommand}"
+                    Margin="8,0,0,0"
+                    Padding="12,4" />
+
+            <Button Grid.Column="4"
+                    Content="Add PDF Files..."
+                    Command="{Binding AddPdfFilesCommand}"
+                    Padding="12,4" />
+        </Grid>
+
+        <!-- PDF Files List -->
+        <GroupBox Grid.Row="1" Header="Selected PDF Files" Margin="0,0,0,12">
+            <ListView ItemsSource="{Binding PdfFiles}" />
+        </GroupBox>
+
+        <!-- Run Verification Action -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,12">
+            <Button Content="Run Verification"
+                    Command="{Binding RunVerificationCommand}"
+                    Padding="16,6"
+                    FontWeight="SemiBold" />
+        </StackPanel>
+
+        <!-- Verification Results -->
+        <GroupBox Grid.Row="3" Header="Verification Reports" Margin="0,0,0,12">
+            <DataGrid ItemsSource="{Binding Reports}"
+                      AutoGenerateColumns="False"
+                      IsReadOnly="True"
+                      CanUserAddRows="False">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="File Name" Binding="{Binding FileName}" Width="200" />
+                    <DataGridTextColumn Header="Skill" Binding="{Binding SkillName}" Width="160" />
+                    <DataGridCheckBoxColumn Header="Valid" Binding="{Binding IsValid, Mode=OneWay}" Width="70" />
+                    <DataGridTextColumn Header="Errors Count" Binding="{Binding Errors.Count, Mode=OneWay}" Width="100" />
+                    <DataGridTextColumn Header="Warnings Count" Binding="{Binding Warnings.Count, Mode=OneWay}" Width="110" />
+                </DataGrid.Columns>
+            </DataGrid>
+        </GroupBox>
+
+        <!-- Status Bar -->
+        <Border Grid.Row="4" Padding="4" Background="#F3F3F3">
+            <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center" />
+        </Border>
+    </Grid>
+</Window>
