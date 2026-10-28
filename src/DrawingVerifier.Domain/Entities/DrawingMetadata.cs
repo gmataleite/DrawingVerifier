@@ -5,20 +5,20 @@ namespace DrawingVerifier.Domain.Entities;
 /// </summary>
 public sealed record DrawingMetadata
 {
-    public string Cliente { get; init; } = string.Empty;
-    public string NumeroDesenho { get; init; } = string.Empty;
-    public string DesenhadoPor { get; init; } = string.Empty;
-    public double? MassaTotal { get; init; }
+    public string Client { get; init; } = string.Empty;
+    public string DrawingNumber { get; init; } = string.Empty;
+    public string DrawnBy { get; init; } = string.Empty;
+    public double? TotalMass { get; init; }
 
     public DrawingMetadata()
     {
     }
 
-    public DrawingMetadata(string cliente, string numeroDesenho, string desenhadoPor, double? massaTotal = null)
+    public DrawingMetadata(string client, string drawingNumber, string drawnBy, double? totalMass = null)
     {
-        Cliente = cliente;
-        NumeroDesenho = numeroDesenho;
-        DesenhadoPor = desenhadoPor;
-        MassaTotal = massaTotal;
+        Client = client;
+        DrawingNumber = drawingNumber;
+        DrawnBy = drawnBy;
+        TotalMass = totalMass;
     }
 }

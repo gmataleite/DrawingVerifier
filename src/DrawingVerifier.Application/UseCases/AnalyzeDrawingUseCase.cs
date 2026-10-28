@@ -37,7 +37,6 @@ public class AnalyzeDrawingUseCase
     {
         ArgumentNullException.ThrowIfNull(skill);
 
-        // B) Initialize the VerificationReport
         var report = new VerificationReport
         {
             FileName = fileName,
@@ -54,7 +53,6 @@ public class AnalyzeDrawingUseCase
             return report;
         }
 
-        // A) Call IGeminiApiService.AnalyzeDrawingAsync with the Base64 content and the skill
         ExtractedDrawingData? extractedData;
         try
         {
@@ -87,47 +85,50 @@ public class AnalyzeDrawingUseCase
             report.Warnings.Add("No Bill of Materials (BOM) items were extracted from the drawing.");
         }
 
-        // C) Cross-reference: for each ExtractedDimension with a BalaoRef,
-        // look up the matching ExtractedBomItem in the parts list.
         foreach (var dimension in dimensions)
         {
-            if (string.IsNullOrWhiteSpace(dimension.BalaoRef))
+            if (string.IsNullOrWhiteSpace(dimension.BalloonRef))
             {
                 continue;
             }
 
-            var matchingBomItem = bomItems.FirstOrDefault(b => MatchBalaoWithBomItem(dimension.BalaoRef, b.Item));
+            var matchingBomItem = bomItems.FirstOrDefault(b => MatchBalloonWithBomItem(dimension.BalloonRef, b.Item));
 
             if (matchingBomItem == null)
             {
-                report.Warnings.Add($"Reference balloon '{dimension.BalaoRef}' (dimension {dimension.CotaBase}) was not found in the Bill of Materials (BOM).");
+                report.Warnings.Add($"Reference balloon '{dimension.BalloonRef}' (dimension {dimension.BaseDimension}) was not found in the Bill of Materials (BOM).");
                 continue;
             }
 
-            // D) Build a Dictionary<string, object> with friendly keys (e.g., "CotaBase", "CotaBom", "Quantidade") from both objects.
-            double cotaBom = 0.0;
-            if (!string.IsNullOrWhiteSpace(matchingBomItem.Dimensoes))
+            double bomDimension = 0.0;
+            if (!string.IsNullOrWhiteSpace(matchingBomItem.Dimensions))
             {
-                var sanitized = matchingBomItem.Dimensoes.Trim().Replace(',', '.');
+                var sanitized = matchingBomItem.Dimensions.Trim().Replace(',', '.');
                 if (double.TryParse(sanitized, NumberStyles.Any, CultureInfo.InvariantCulture, out var parsed))
                 {
-                    cotaBom = parsed;
+                    bomDimension = parsed;
                 }
             }
 
             var parameters = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
             {
-                ["CotaBase"] = dimension.CotaBase,
-                ["CotaBom"] = cotaBom,
-                ["Quantidade"] = matchingBomItem.Quantidade,
-                ["Dimensoes"] = cotaBom != 0.0 || matchingBomItem.Dimensoes?.Trim() == "0" ? cotaBom : (matchingBomItem.Dimensoes ?? string.Empty),
-                ["BalaoRef"] = dimension.BalaoRef,
+                ["BaseDimension"] = dimension.BaseDimension,
+                ["BomDimension"] = bomDimension,
+                ["Quantity"] = matchingBomItem.Quantity,
+                ["Dimensions"] = bomDimension != 0.0 || matchingBomItem.Dimensions?.Trim() == "0" ? bomDimension : (matchingBomItem.Dimensions ?? string.Empty),
+                ["BalloonRef"] = dimension.BalloonRef,
                 ["Item"] = matchingBomItem.Item,
-                ["TextoAdicional"] = dimension.TextoAdicional ?? string.Empty
+                ["AdditionalText"] = dimension.AdditionalText ?? string.Empty,
+
+                // Backward-compatibility aliases for existing rules
+                ["CotaBase"] = dimension.BaseDimension,
+                ["CotaBom"] = bomDimension,
+                ["Quantidade"] = matchingBomItem.Quantity,
+                ["Dimensoes"] = bomDimension != 0.0 || matchingBomItem.Dimensions?.Trim() == "0" ? bomDimension : (matchingBomItem.Dimensions ?? string.Empty),
+                ["BalaoRef"] = dimension.BalloonRef,
+                ["TextoAdicional"] = dimension.AdditionalText ?? string.Empty
             };
 
-            // E) Iterate over skill.Rules passing the dictionary to the IRuleEvaluator.
-            // On failure, add the errorMessage to the report's error list.
             if (skill.Rules != null)
             {
                 foreach (var rule in skill.Rules)
@@ -143,29 +144,28 @@ public class AnalyzeDrawingUseCase
             }
         }
 
-        // F) Return the populated report.
         report.IsValid = report.Errors.Count == 0;
         return report;
     }
 
-    private static bool MatchBalaoWithBomItem(string balaoRef, string? bomItem)
+    private static bool MatchBalloonWithBomItem(string balloonRef, string? bomItem)
     {
-        if (string.IsNullOrWhiteSpace(balaoRef) || string.IsNullOrWhiteSpace(bomItem))
+        if (string.IsNullOrWhiteSpace(balloonRef) || string.IsNullOrWhiteSpace(bomItem))
         {
             return false;
         }
 
-        var cleanBalao = balaoRef.Trim();
+        var cleanBalloon = balloonRef.Trim();
         var cleanBom = bomItem.Trim();
 
-        if (string.Equals(cleanBalao, cleanBom, StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(cleanBalloon, cleanBom, StringComparison.OrdinalIgnoreCase))
         {
             return true;
         }
 
-        if (int.TryParse(cleanBalao, out var balaoInt) && int.TryParse(cleanBom, out var bomInt))
+        if (int.TryParse(cleanBalloon, out var balloonInt) && int.TryParse(cleanBom, out var bomInt))
         {
-            return balaoInt == bomInt;
+            return balloonInt == bomInt;
         }
 
         return false;

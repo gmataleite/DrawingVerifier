@@ -13,7 +13,7 @@ public class ValidationRule
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
-    /// Mathematical or boolean expression evaluated by NCalc (e.g., "CotaBase &lt;= CotaBom").
+    /// Mathematical or boolean expression evaluated by NCalc (e.g., "BaseDimension <= BomDimension").
     /// </summary>
     public string Expression { get; set; } = string.Empty;
 
