@@ -19,13 +19,14 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- Top Controls: Skill Selection & Add PDFs -->
+        <!-- Top Controls: Skill Selection, Add PDFs & Settings -->
         <Grid Grid.Row="0" Margin="0,0,0,12">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="260" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
@@ -50,6 +51,12 @@
             <Button Grid.Column="4"
                     Content="Add PDF Files..."
                     Command="{Binding AddPdfFilesCommand}"
+                    Padding="12,4" />
+
+            <Button Grid.Column="5"
+                    Content="Settings"
+                    Command="{Binding OpenSettingsCommand}"
+                    Margin="8,0,0,0"
                     Padding="12,4" />
         </Grid>
 
