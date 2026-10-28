@@ -1,22 +1,22 @@
 namespace DrawingVerifier.Domain.Entities;
 
 /// <summary>
-/// Objeto raiz que representa os dados estruturados extraídos do desenho técnico em PDF pela IA.
+/// Root object representing the structured data extracted by the AI from the technical drawing PDF.
 /// </summary>
 public sealed record ExtractedDrawingData
 {
     /// <summary>
-    /// Metadados gerais do cabeçalho/legenda do desenho.
+    /// General metadata from the drawing title block.
     /// </summary>
     public DrawingMetadata Metadata { get; init; } = new();
 
     /// <summary>
-    /// Itens da Lista de Materiais (BOM) identificados no desenho.
+    /// Bill of Materials (BOM) items identified in the drawing.
     /// </summary>
     public List<ExtractedBomItem> BomItems { get; init; } = [];
 
     /// <summary>
-    /// Dimensões e cotas geométricas identificadas nas vistas do desenho.
+    /// Geometric dimensions identified in the drawing views.
     /// </summary>
     public List<ExtractedDimension> Dimensions { get; init; } = [];
 
@@ -34,4 +34,3 @@ public sealed record ExtractedDrawingData
         Dimensions = dimensions ?? [];
     }
 }
-

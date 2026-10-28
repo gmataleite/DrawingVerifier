@@ -1,7 +1,7 @@
 namespace DrawingVerifier.Domain.Entities;
 
 /// <summary>
-/// Representa uma linha extraída da Lista de Materiais (Bill of Materials - BOM).
+/// Represents a row extracted from the Bill of Materials (BOM).
 /// </summary>
 public sealed record ExtractedBomItem
 {
@@ -20,4 +20,3 @@ public sealed record ExtractedBomItem
         Dimensoes = dimensoes;
     }
 }
-

@@ -9,7 +9,7 @@ using DrawingVerifier.Domain.Interfaces;
 using Microsoft.Extensions.Configuration;
 
 /// <summary>
-/// Cliente HTTP para a API do Google Gemini (1.5 Pro) para análise multimodal de PDFs de engenharia.
+/// HTTP client for the Google Gemini (1.5 Pro) API, used for multimodal analysis of engineering PDFs.
 /// </summary>
 public class GeminiApiHttpClient : IGeminiApiService
 {

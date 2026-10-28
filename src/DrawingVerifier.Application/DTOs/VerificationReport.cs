@@ -1,32 +1,32 @@
 namespace DrawingVerifier.Application.DTOs;
 
 /// <summary>
-/// Relatório consolidado da verificação do desenho técnico contra as regras da Skill.
+/// Consolidated report of a technical drawing verification against the Skill rules.
 /// </summary>
 public sealed record VerificationReport
 {
     /// <summary>
-    /// Nome do arquivo PDF analisado.
+    /// Name of the analyzed PDF file.
     /// </summary>
     public string FileName { get; set; } = string.Empty;
 
     /// <summary>
-    /// Nome da Skill utilizada na verificação.
+    /// Name of the Skill used for the verification.
     /// </summary>
     public string SkillName { get; set; } = string.Empty;
 
     /// <summary>
-    /// Indica se o desenho passou em todas as regras sem erros.
+    /// Indicates whether the drawing passed all rules without errors.
     /// </summary>
     public bool IsValid { get; set; } = true;
 
     /// <summary>
-    /// Lista de inconsistências e falhas identificadas pelas regras de validação.
+    /// Inconsistencies and failures identified by the validation rules.
     /// </summary>
     public List<string> Errors { get; set; } = [];
 
     /// <summary>
-    /// Avisos ou inconformidades não bloqueantes (ex: balão sem item correspondente na BOM).
+    /// Non-blocking warnings (e.g., a balloon without a matching BOM item).
     /// </summary>
     public List<string> Warnings { get; set; } = [];
 

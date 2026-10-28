@@ -3,7 +3,7 @@ namespace DrawingVerifier.Domain.Interfaces;
 using DrawingVerifier.Domain.Entities;
 
 /// <summary>
-/// Contrato de repositório para persistência e consulta de perfis de verificação (VerificationSkill).
+/// Repository contract for persisting and querying verification profiles (VerificationSkill).
 /// </summary>
 public interface ISkillRepository
 {
@@ -17,4 +17,3 @@ public interface ISkillRepository
 
     Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
 }
-
