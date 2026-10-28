@@ -15,10 +15,10 @@ public static class DatabaseSeeder
             "metadata": {
               "type": "object",
               "properties": {
-                "cliente": { "type": "string" },
-                "numeroDesenho": { "type": "string" },
-                "desenhadoPor": { "type": "string" },
-                "massaTotal": { "type": "number" }
+                "client": { "type": "string" },
+                "drawingNumber": { "type": "string" },
+                "drawnBy": { "type": "string" },
+                "totalMass": { "type": "number" }
               }
             },
             "bomItems": {
@@ -27,10 +27,10 @@ public static class DatabaseSeeder
                 "type": "object",
                 "properties": {
                   "item": { "type": "string" },
-                  "quantidade": { "type": "number" },
-                  "dimensoes": { "type": "string" }
+                  "quantity": { "type": "number" },
+                  "dimensions": { "type": "string" }
                 },
-                "required": ["item", "quantidade", "dimensoes"]
+                "required": ["item", "quantity", "dimensions"]
               }
             },
             "dimensions": {
@@ -38,11 +38,11 @@ public static class DatabaseSeeder
               "items": {
                 "type": "object",
                 "properties": {
-                  "balaoRef": { "type": "string" },
-                  "cotaBase": { "type": "number" },
-                  "textoAdicional": { "type": "string" }
+                  "balloonRef": { "type": "string" },
+                  "baseDimension": { "type": "number" },
+                  "additionalText": { "type": "string" }
                 },
-                "required": ["balaoRef", "cotaBase"]
+                "required": ["balloonRef", "baseDimension"]
               }
             }
           },
@@ -58,8 +58,6 @@ public static class DatabaseSeeder
     {
         ArgumentNullException.ThrowIfNull(repository);
 
-        // The repository contract is async; the LiteDB implementation completes synchronously,
-        // so blocking here at startup is safe and keeps the requested synchronous signature.
         var existingSkills = repository.GetAllAsync().GetAwaiter().GetResult();
         if (existingSkills.Count > 0)
         {
@@ -79,9 +77,7 @@ public static class DatabaseSeeder
                 new ValidationRule(
                     Guid.NewGuid(),
                     "Overmetal Check",
-                    // Uses the parameter keys produced by AnalyzeDrawingUseCase:
-                    // CotaBase = dimension in the drawing view, CotaBom = length listed in the BOM.
-                    "CotaBase == CotaBom + 100",
+                    "BaseDimension == BomDimension + 100",
                     "Overmetal measurement does not match BOM + 100mm")
             ]
         };
