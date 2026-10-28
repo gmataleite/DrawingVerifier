@@ -3,16 +3,16 @@ namespace DrawingVerifier.Application.Services;
 using DrawingVerifier.Domain.Entities;
 
 /// <summary>
-/// Contrato para o motor de avaliação de regras dinâmicas.
+/// Contract for the dynamic rule evaluation engine.
 /// </summary>
 public interface IRuleEvaluator
 {
     /// <summary>
-    /// Avalia uma regra lógica/matemática com os parâmetros fornecidos.
+    /// Evaluates a logical/mathematical rule with the supplied parameters.
     /// </summary>
-    /// <param name="rule">A regra a ser avaliada.</param>
-    /// <param name="parameters">Dicionário com os parâmetros disponíveis para a expressão.</param>
-    /// <param name="errorMessage">Mensagem de erro gerada caso a regra falhe ou ocorra erro de sintaxe.</param>
-    /// <returns>True se a expressão foi avaliada com sucesso e resultou em verdadeiro; caso contrário, False.</returns>
+    /// <param name="rule">The rule to evaluate.</param>
+    /// <param name="parameters">Dictionary with the parameters available to the expression.</param>
+    /// <param name="errorMessage">Error message produced when the rule fails or a syntax error occurs.</param>
+    /// <returns>True if the expression was evaluated successfully and resulted in true; otherwise, false.</returns>
     bool Evaluate(ValidationRule rule, Dictionary<string, object> parameters, out string errorMessage);
 }

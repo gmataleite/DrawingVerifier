@@ -1,24 +1,24 @@
 namespace DrawingVerifier.Domain.Entities;
 
 /// <summary>
-/// Representa uma regra matemática/lógica de validação avaliada dinamicamente via NCalc.
+/// Represents a mathematical/logical validation rule dynamically evaluated via NCalc.
 /// </summary>
 public class ValidationRule
 {
     public Guid Id { get; set; } = Guid.NewGuid();
 
     /// <summary>
-    /// Nome descritivo da regra (ex: "Validação de Sobremetal Mínimo").
+    /// Descriptive rule name (e.g., "Minimum Overmetal Check").
     /// </summary>
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
-    /// Expressão matemática ou booleana avaliada pelo NCalc (ex: "CotaBase <= Dimensoes").
+    /// Mathematical or boolean expression evaluated by NCalc (e.g., "CotaBase &lt;= CotaBom").
     /// </summary>
     public string Expression { get; set; } = string.Empty;
 
     /// <summary>
-    /// Mensagem de erro amigável caso a validação retorne falso ou falhe.
+    /// User-friendly error message shown when the validation returns false.
     /// </summary>
     public string ErrorMessage { get; set; } = string.Empty;
 
@@ -34,4 +34,3 @@ public class ValidationRule
         ErrorMessage = errorMessage;
     }
 }
-

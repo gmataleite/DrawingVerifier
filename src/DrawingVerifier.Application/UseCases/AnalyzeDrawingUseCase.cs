@@ -7,8 +7,8 @@ using DrawingVerifier.Domain.Entities;
 using DrawingVerifier.Domain.Interfaces;
 
 /// <summary>
-/// Caso de uso responsável por orquestrar a extração de dados do desenho via IA
-/// e a validação das regras matemáticas e de conformidade.
+/// Use case that orchestrates the AI-based drawing data extraction
+/// and the evaluation of the mathematical and compliance rules.
 /// </summary>
 public class AnalyzeDrawingUseCase
 {
@@ -22,13 +22,13 @@ public class AnalyzeDrawingUseCase
     }
 
     /// <summary>
-    /// Executa o fluxo de análise e validação do desenho técnico em PDF.
+    /// Runs the analysis and validation flow for a technical drawing PDF.
     /// </summary>
-    /// <param name="fileName">Nome do arquivo PDF a ser validado.</param>
-    /// <param name="pdfBase64">Conteúdo do arquivo codificado em Base64.</param>
-    /// <param name="skill">Perfil de verificação (Skill) com prompt e regras.</param>
-    /// <param name="cancellationToken">Token de cancelamento.</param>
-    /// <returns>Relatório consolidado com status da validação, erros e avisos.</returns>
+    /// <param name="fileName">Name of the PDF file being validated.</param>
+    /// <param name="pdfBase64">File content encoded in Base64.</param>
+    /// <param name="skill">Verification profile (Skill) containing the prompt and rules.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Consolidated report with validation status, errors and warnings.</returns>
     public async Task<VerificationReport> ExecuteAsync(
         string fileName,
         string pdfBase64,
@@ -37,7 +37,7 @@ public class AnalyzeDrawingUseCase
     {
         ArgumentNullException.ThrowIfNull(skill);
 
-        // B) Inicialize um VerificationReport
+        // B) Initialize the VerificationReport
         var report = new VerificationReport
         {
             FileName = fileName,
@@ -49,12 +49,12 @@ public class AnalyzeDrawingUseCase
 
         if (string.IsNullOrWhiteSpace(pdfBase64))
         {
-            report.Errors.Add("O conteúdo Base64 do PDF fornecido está vazio ou inválido.");
+            report.Errors.Add("The supplied PDF Base64 content is empty or invalid.");
             report.IsValid = false;
             return report;
         }
 
-        // A) Chame o IGeminiApiService.AnalyzeDrawingAsync passando o base64 e a skill
+        // A) Call IGeminiApiService.AnalyzeDrawingAsync with the Base64 content and the skill
         ExtractedDrawingData? extractedData;
         try
         {
@@ -62,14 +62,14 @@ public class AnalyzeDrawingUseCase
         }
         catch (Exception ex)
         {
-            report.Errors.Add($"Falha ao comunicar com o serviço de extração de IA: {ex.Message}");
+            report.Errors.Add($"Failed to communicate with the AI extraction service: {ex.Message}");
             report.IsValid = false;
             return report;
         }
 
         if (extractedData == null)
         {
-            report.Errors.Add("O serviço de IA não retornou dados estruturados para o desenho.");
+            report.Errors.Add("The AI service returned no structured data for the drawing.");
             report.IsValid = false;
             return report;
         }
@@ -79,16 +79,16 @@ public class AnalyzeDrawingUseCase
 
         if (dimensions.Count == 0)
         {
-            report.Warnings.Add("Nenhuma cota geométrica foi extraída do desenho.");
+            report.Warnings.Add("No geometric dimensions were extracted from the drawing.");
         }
 
         if (bomItems.Count == 0)
         {
-            report.Warnings.Add("Nenhum item da lista de materiais (BOM) foi extraído do desenho.");
+            report.Warnings.Add("No Bill of Materials (BOM) items were extracted from the drawing.");
         }
 
-        // C) Crie a lógica de cruzamento base: Para cada ExtractedDimension extraída que possua um BalaoRef,
-        // busque o ExtractedBomItem correspondente na lista de peças.
+        // C) Cross-reference: for each ExtractedDimension with a BalaoRef,
+        // look up the matching ExtractedBomItem in the parts list.
         foreach (var dimension in dimensions)
         {
             if (string.IsNullOrWhiteSpace(dimension.BalaoRef))
@@ -100,11 +100,11 @@ public class AnalyzeDrawingUseCase
 
             if (matchingBomItem == null)
             {
-                report.Warnings.Add($"O balão de referência '{dimension.BalaoRef}' da cota {dimension.CotaBase} não foi encontrado na lista de materiais (BOM).");
+                report.Warnings.Add($"Reference balloon '{dimension.BalaoRef}' (dimension {dimension.CotaBase}) was not found in the Bill of Materials (BOM).");
                 continue;
             }
 
-            // D) Monte um Dictionary<string, object> contendo chaves amigáveis (ex: "CotaBase", "CotaBom", "Quantidade") extraídas desses dois objetos.
+            // D) Build a Dictionary<string, object> with friendly keys (e.g., "CotaBase", "CotaBom", "Quantidade") from both objects.
             double cotaBom = 0.0;
             if (!string.IsNullOrWhiteSpace(matchingBomItem.Dimensoes))
             {
@@ -126,8 +126,8 @@ public class AnalyzeDrawingUseCase
                 ["TextoAdicional"] = dimension.TextoAdicional ?? string.Empty
             };
 
-            // E) Itere sobre as skill.Rules passando esse dicionário para o IRuleEvaluator.
-            // Se falhar, adicione o errorMessage na lista de erros do Report.
+            // E) Iterate over skill.Rules passing the dictionary to the IRuleEvaluator.
+            // On failure, add the errorMessage to the report's error list.
             if (skill.Rules != null)
             {
                 foreach (var rule in skill.Rules)
@@ -143,7 +143,7 @@ public class AnalyzeDrawingUseCase
             }
         }
 
-        // F) Retorne o Report preenchido.
+        // F) Return the populated report.
         report.IsValid = report.Errors.Count == 0;
         return report;
     }

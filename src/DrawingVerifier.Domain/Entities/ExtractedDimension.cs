@@ -1,22 +1,22 @@
 namespace DrawingVerifier.Domain.Entities;
 
 /// <summary>
-/// Representa uma cota/dimensão geométrica extraída da vista do desenho técnico.
+/// Represents a geometric dimension extracted from a technical drawing view.
 /// </summary>
 public sealed record ExtractedDimension
 {
     /// <summary>
-    /// Identificador do balão de referência ou posição na vista (ex: "1", "12", "A").
+    /// Reference balloon identifier or position in the view (e.g., "1", "12", "A").
     /// </summary>
     public string BalaoRef { get; init; } = string.Empty;
 
     /// <summary>
-    /// Valor numérico da cota base/nominal para uso em cálculos e regras matemáticas.
+    /// Nominal/base numeric value of the dimension, used in calculations and mathematical rules.
     /// </summary>
     public double CotaBase { get; init; }
 
     /// <summary>
-    /// Informações complementares da cota (ex: tolerâncias "±0.05", campo "2x", acabamento superficial).
+    /// Additional dimension information (e.g., tolerances "±0.05", "2x" multiplier, surface finish).
     /// </summary>
     public string? TextoAdicional { get; init; }
 
@@ -31,4 +31,3 @@ public sealed record ExtractedDimension
         TextoAdicional = textoAdicional;
     }
 }
-

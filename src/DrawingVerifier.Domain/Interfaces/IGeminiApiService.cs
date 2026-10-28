@@ -3,21 +3,20 @@ namespace DrawingVerifier.Domain.Interfaces;
 using DrawingVerifier.Domain.Entities;
 
 /// <summary>
-/// Contrato para comunicação com o serviço de IA (Google Gemini 1.5 Pro)
-/// para análise multimodal de PDFs de engenharia e extração de dados estruturados.
+/// Contract for communicating with the AI service (Google Gemini 1.5 Pro)
+/// for multimodal analysis of engineering PDFs and structured data extraction.
 /// </summary>
 public interface IGeminiApiService
 {
     /// <summary>
-    /// Envia o PDF codificado em Base64 para análise pela IA utilizando o prompt e schema definidos na Skill.
+    /// Sends the Base64-encoded PDF to the AI for analysis using the prompt and schema defined in the Skill.
     /// </summary>
-    /// <param name="pdfBase64">Conteúdo do arquivo PDF em string Base64.</param>
-    /// <param name="skill">Perfil com as instruções de extração e schema JSON correspondente.</param>
-    /// <param name="cancellationToken">Token para cancelamento da requisição assíncrona.</param>
-    /// <returns>Dados estruturados extraídos do desenho mecânico.</returns>
+    /// <param name="pdfBase64">PDF file content as a Base64 string.</param>
+    /// <param name="skill">Profile containing the extraction instructions and the corresponding JSON schema.</param>
+    /// <param name="cancellationToken">Token used to cancel the asynchronous request.</param>
+    /// <returns>Structured data extracted from the mechanical drawing.</returns>
     Task<ExtractedDrawingData> AnalyzeDrawingAsync(
         string pdfBase64,
         VerificationSkill skill,
         CancellationToken cancellationToken = default);
 }
-

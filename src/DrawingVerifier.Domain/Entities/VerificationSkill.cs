@@ -1,30 +1,30 @@
 namespace DrawingVerifier.Domain.Entities;
 
 /// <summary>
-/// Representa o perfil de verificação (ex: perfil de cliente como Relco),
-/// agregando o prompt do sistema para IA, schema estruturado e regras de validação.
+/// Represents a verification profile (e.g., a client profile such as BHP, Vale, etc.) containing specialized
+/// instructions for the Gemini AI, aggregating the system prompt, the structured output schema and the validation rules.
 /// </summary>
 public class VerificationSkill
 {
     public Guid Id { get; set; } = Guid.NewGuid();
 
     /// <summary>
-    /// Nome da Skill / Perfil do Cliente (ex: "Relco - Padrão Mecânico").
+    /// Skill / client profile name (e.g., "BHP - Mechanical Standard").
     /// </summary>
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
-    /// Instruções especializadas enviadas à IA do Gemini para orientar a extração do PDF.
+    /// Specialized instructions sent to the Gemini AI to guide the PDF data extraction.
     /// </summary>
     public string SystemPrompt { get; set; } = string.Empty;
 
     /// <summary>
-    /// Esquema JSON (JSON Schema) que define o contrato estrito esperado como resposta da IA.
+    /// JSON Schema defining the strict contract expected as the AI response.
     /// </summary>
     public string OutputSchemaJson { get; set; } = string.Empty;
 
     /// <summary>
-    /// Lista de regras de validação associadas a esta Skill.
+    /// Validation rules associated with this Skill.
     /// </summary>
     public List<ValidationRule> Rules { get; set; } = [];
 
@@ -46,4 +46,3 @@ public class VerificationSkill
         Rules = rules ?? [];
     }
 }
-

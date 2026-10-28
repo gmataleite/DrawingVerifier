@@ -1,7 +1,7 @@
 namespace DrawingVerifier.Domain.Entities;
 
 /// <summary>
-/// Metadados extraídos da legenda/carimbo do desenho técnico.
+/// Metadata extracted from the technical drawing title block.
 /// </summary>
 public sealed record DrawingMetadata
 {
@@ -22,4 +22,3 @@ public sealed record DrawingMetadata
         MassaTotal = massaTotal;
     }
 }
-

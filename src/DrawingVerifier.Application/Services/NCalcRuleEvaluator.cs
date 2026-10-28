@@ -4,7 +4,7 @@ using DrawingVerifier.Domain.Entities;
 using NCalc;
 
 /// <summary>
-/// Avaliador de regras dinâmicas utilizando o motor NCalc.
+/// Dynamic rule evaluator powered by the NCalc engine.
 /// </summary>
 public class NCalcRuleEvaluator : IRuleEvaluator
 {
@@ -12,7 +12,7 @@ public class NCalcRuleEvaluator : IRuleEvaluator
     {
         if (rule == null || string.IsNullOrWhiteSpace(rule.Expression))
         {
-            errorMessage = "Erro de sintaxe na regra: Expressão nula ou não definida.";
+            errorMessage = "Rule syntax error: expression is null or not defined.";
             return false;
         }
 
@@ -34,7 +34,7 @@ public class NCalcRuleEvaluator : IRuleEvaluator
 
             if (expression.HasErrors())
             {
-                errorMessage = "Erro de sintaxe na regra: " + expression.Error?.Message;
+                errorMessage = "Rule syntax error: " + expression.Error?.Message;
                 return false;
             }
 
@@ -69,7 +69,7 @@ public class NCalcRuleEvaluator : IRuleEvaluator
         }
         catch (Exception ex)
         {
-            errorMessage = "Erro de sintaxe na regra: " + ex.Message;
+            errorMessage = "Rule syntax error: " + ex.Message;
             return false;
         }
     }

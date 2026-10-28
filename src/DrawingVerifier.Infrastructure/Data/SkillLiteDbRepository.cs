@@ -5,7 +5,7 @@ using DrawingVerifier.Domain.Interfaces;
 using LiteDB;
 
 /// <summary>
-/// Repositório de perfis de verificação (VerificationSkill) baseado no banco embarcado LiteDB.
+/// Verification profile (VerificationSkill) repository backed by the LiteDB embedded database.
 /// </summary>
 public class SkillLiteDbRepository : ISkillRepository
 {
