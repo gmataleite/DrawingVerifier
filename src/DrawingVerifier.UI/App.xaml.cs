@@ -9,7 +9,7 @@ using DrawingVerifier.Infrastructure.Data;
 using DrawingVerifier.Infrastructure.Gemini;
 using DrawingVerifier.Infrastructure.Services;
 using DrawingVerifier.UI.ViewModels;
-using Microsoft.Extensions.Configuration;
+using DrawingVerifier.UI.Views;
 using Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
@@ -36,9 +36,7 @@ public partial class App : System.Windows.Application
 
     private static void ConfigureServices(IServiceCollection services)
     {
-        var configuration = new ConfigurationBuilder().Build();
-        services.AddSingleton<IConfiguration>(configuration);
-
+        services.AddSingleton<ISettingsService, WindowsSettingsService>();
         services.AddSingleton<ISkillRepository>(_ => new SkillLiteDbRepository());
         services.AddTransient<IRuleEvaluator, NCalcRuleEvaluator>();
         services.AddHttpClient<IGeminiApiService, GeminiApiHttpClient>();
@@ -47,6 +45,8 @@ public partial class App : System.Windows.Application
 
         services.AddTransient<MainViewModel>();
         services.AddTransient<MainWindow>();
+        services.AddTransient<SettingsViewModel>();
+        services.AddTransient<SettingsWindow>();
     }
 
     private static void SeedDatabase(IServiceProvider serviceProvider)

@@ -9,6 +9,8 @@ using DrawingVerifier.Application.Interfaces;
 using DrawingVerifier.Application.UseCases;
 using DrawingVerifier.Domain.Entities;
 using DrawingVerifier.Domain.Interfaces;
+using DrawingVerifier.UI.Views;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Win32;
 
 public partial class MainViewModel : ObservableObject
@@ -18,6 +20,8 @@ public partial class MainViewModel : ObservableObject
     private readonly ISkillRepository _skillRepository;
     private readonly AnalyzeDrawingUseCase _analyzeDrawingUseCase;
     private readonly IReportGenerator _reportGenerator;
+    private readonly ISettingsService _settingsService;
+    private readonly IServiceProvider? _serviceProvider;
 
     [ObservableProperty]
     private ObservableCollection<VerificationSkill> _skills = [];
@@ -40,11 +44,15 @@ public partial class MainViewModel : ObservableObject
     public MainViewModel(
         ISkillRepository skillRepository,
         AnalyzeDrawingUseCase analyzeDrawingUseCase,
-        IReportGenerator reportGenerator)
+        IReportGenerator reportGenerator,
+        ISettingsService settingsService,
+        IServiceProvider? serviceProvider = null)
     {
         _skillRepository = skillRepository ?? throw new ArgumentNullException(nameof(skillRepository));
         _analyzeDrawingUseCase = analyzeDrawingUseCase ?? throw new ArgumentNullException(nameof(analyzeDrawingUseCase));
         _reportGenerator = reportGenerator ?? throw new ArgumentNullException(nameof(reportGenerator));
+        _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
+        _serviceProvider = serviceProvider;
     }
 
     [RelayCommand]
@@ -112,8 +120,28 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void OpenSettings()
+    {
+        var settingsWindow = _serviceProvider?.GetService<SettingsWindow>()
+            ?? new SettingsWindow(new SettingsViewModel(_settingsService));
+
+        if (System.Windows.Application.Current?.MainWindow is { IsVisible: true } mainWindow)
+        {
+            settingsWindow.Owner = mainWindow;
+        }
+
+        settingsWindow.ShowDialog();
+    }
+
+    [RelayCommand]
     private async Task RunVerificationAsync()
     {
+        if (string.IsNullOrWhiteSpace(_settingsService.GetApiKey()))
+        {
+            StatusMessage = "API Key is missing. Please configure it in Settings.";
+            return;
+        }
+
         if (IsBusy)
         {
             return;
