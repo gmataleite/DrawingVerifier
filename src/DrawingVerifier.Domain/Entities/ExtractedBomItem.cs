@@ -6,17 +6,17 @@ namespace DrawingVerifier.Domain.Entities;
 public sealed record ExtractedBomItem
 {
     public string Item { get; init; } = string.Empty;
-    public double Quantidade { get; init; }
-    public string Dimensoes { get; init; } = string.Empty;
+    public double Quantity { get; init; }
+    public string Dimensions { get; init; } = string.Empty;
 
     public ExtractedBomItem()
     {
     }
 
-    public ExtractedBomItem(string item, double quantidade, string dimensoes)
+    public ExtractedBomItem(string item, double quantity, string dimensions)
     {
         Item = item;
-        Quantidade = quantidade;
-        Dimensoes = dimensoes;
+        Quantity = quantity;
+        Dimensions = dimensions;
     }
 }
