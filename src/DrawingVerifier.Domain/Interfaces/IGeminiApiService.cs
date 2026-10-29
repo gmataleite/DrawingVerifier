@@ -3,7 +3,7 @@ namespace DrawingVerifier.Domain.Interfaces;
 using DrawingVerifier.Domain.Entities;
 
 /// <summary>
-/// Contract for communicating with the AI service (Google Gemini 1.5 Pro)
+/// Contract for communicating with the AI service (Google Gemini)
 /// for multimodal analysis of engineering PDFs and structured data extraction.
 /// </summary>
 public interface IGeminiApiService

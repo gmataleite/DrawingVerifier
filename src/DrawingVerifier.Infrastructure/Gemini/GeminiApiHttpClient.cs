@@ -8,12 +8,12 @@ using DrawingVerifier.Domain.Entities;
 using DrawingVerifier.Domain.Interfaces;
 
 /// <summary>
-/// HTTP client for the Google Gemini (1.5 Pro) API, used for multimodal analysis of engineering PDFs.
+/// HTTP client for the Google Gemini (3.1 Flash Lite) API, used for multimodal analysis of engineering PDFs.
 /// </summary>
 public class GeminiApiHttpClient : IGeminiApiService
 {
     private const string DefaultGeminiEndpoint =
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent";
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent";
 
     private readonly HttpClient _httpClient;
     private readonly ISettingsService _settingsService;
