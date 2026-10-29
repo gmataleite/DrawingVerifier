@@ -134,6 +134,21 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private async Task OpenSkillManagerAsync()
+    {
+        var skillManagerWindow = _serviceProvider?.GetService<SkillManagerWindow>()
+            ?? new SkillManagerWindow(new SkillManagerViewModel(_skillRepository));
+
+        if (System.Windows.Application.Current?.MainWindow is { IsVisible: true } mainWindow)
+        {
+            skillManagerWindow.Owner = mainWindow;
+        }
+
+        skillManagerWindow.ShowDialog();
+        await LoadSkillsAsync();
+    }
+
+    [RelayCommand]
     private async Task RunVerificationAsync()
     {
         if (string.IsNullOrWhiteSpace(_settingsService.GetApiKey()))

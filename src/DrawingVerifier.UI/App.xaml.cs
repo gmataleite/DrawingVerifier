@@ -82,6 +82,8 @@ public partial class App : System.Windows.Application
         services.AddTransient<MainWindow>();
         services.AddTransient<SettingsViewModel>();
         services.AddTransient<SettingsWindow>();
+        services.AddTransient<SkillManagerViewModel>();
+        services.AddTransient<SkillManagerWindow>();
     }
 
     private static void SeedDatabase(IServiceProvider serviceProvider)
