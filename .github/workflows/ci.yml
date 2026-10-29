@@ -3,7 +3,9 @@ name: WPF CI Build
 on:
   pull_request:
     branches:
+      - main
       - master
+  workflow_dispatch:
 
 jobs:
   build:

@@ -3,7 +3,7 @@
 As an Autonomous Developer, you MUST strictly follow this Git workflow for ANY code changes or new features requested, before writing any code:
 
 1. **Branching:**
-   - NEVER code directly on the `master` or `main` branch.
+   - NEVER code directly on the `main` or `master` branch.
    - Before writing code, create and checkout a new branch.
    - Naming convention: `feature/phase-X-short-name` or `fix/bug-name`.
 
@@ -17,8 +17,8 @@ As an Autonomous Developer, you MUST strictly follow this Git workflow for ANY c
 
 4. **Push & Pull Request:**
    - Push the branch to the remote repository (`git push -u origin <branch-name>`).
-   - If you have access to the GitHub CLI (`gh`), create a Pull Request to the `master` branch via terminal.
+   - If you have access to the GitHub CLI (`gh`), create a Pull Request to the `main` branch via terminal.
    - If the CLI is not available, leave the branch in the remote repository and notify the user to open the PR manually.
 
 5. **Approval:**
-   - Merging into `master` will be done by the user (code review). Do not merge on your own.
+   - Merging into `main` will be done by the user (code review). Do not merge on your own.
