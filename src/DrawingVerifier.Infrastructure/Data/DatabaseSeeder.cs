@@ -77,8 +77,8 @@ public static class DatabaseSeeder
                 new ValidationRule(
                     Guid.NewGuid(),
                     "Overmetal Check",
-                    "BaseDimension == BomDimension + 100",
-                    "Overmetal measurement does not match BOM + 100mm")
+                    "BomDimension == BaseDimension + 100",
+                    "Overmetal measurement does not match BOM (expected BOM = Base + 100mm)")
             ]
         };
 
