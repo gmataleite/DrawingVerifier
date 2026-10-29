@@ -6,19 +6,22 @@
         xmlns:viewmodels="clr-namespace:DrawingVerifier.UI.ViewModels"
         d:DataContext="{d:DesignInstance Type=viewmodels:SettingsViewModel}"
         mc:Ignorable="d"
-        Title="Settings - Gemini API Key"
-        Height="190"
-        Width="460"
+        Title="Settings - Gemini AI &amp; Vision Options"
+        Height="310"
+        Width="500"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner">
     <Grid Margin="16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
+        <!-- Gemini API Key -->
         <TextBlock Grid.Row="0"
                    Text="Gemini API Key:"
                    FontWeight="SemiBold"
@@ -28,9 +31,34 @@
                  Text="{Binding ApiKey, UpdateSourceTrigger=PropertyChanged}"
                  Height="28"
                  VerticalContentAlignment="Center"
-                 Padding="6,2" />
+                 Padding="6,2"
+                 Margin="0,0,0,14" />
 
-        <StackPanel Grid.Row="3"
+        <!-- Gemini Model Selection -->
+        <StackPanel Grid.Row="2" Margin="0,0,0,14">
+            <TextBlock Text="Gemini Model:"
+                       FontWeight="SemiBold"
+                       Margin="0,0,0,6" />
+            <ComboBox ItemsSource="{Binding AvailableGeminiModels}"
+                      SelectedItem="{Binding SelectedGeminiModel}"
+                      Height="28"
+                      VerticalContentAlignment="Center" />
+        </StackPanel>
+
+        <!-- High-DPI Quadrant Tiling Toggle -->
+        <StackPanel Grid.Row="3" Margin="0,0,0,10">
+            <CheckBox IsChecked="{Binding EnableHighDpiTiling}"
+                      Content="Enable High-DPI Quadrant Tiling (300 DPI)"
+                      FontWeight="SemiBold" />
+            <TextBlock Text="Rasterizes sheets at 300 DPI into 4 overlapping quadrants + full view to prevent line tracing and spatial errors on large sheets (A1/A0)."
+                       TextWrapping="Wrap"
+                       Foreground="#666666"
+                       FontSize="11"
+                       Margin="20,4,0,0" />
+        </StackPanel>
+
+        <!-- Save Button -->
+        <StackPanel Grid.Row="5"
                     Orientation="Horizontal"
                     HorizontalAlignment="Right">
             <Button Content="Save"

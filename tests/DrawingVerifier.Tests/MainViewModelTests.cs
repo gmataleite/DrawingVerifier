@@ -40,6 +40,10 @@ public class MainViewModelTests
     {
         public string? GetApiKey() => "test-key";
         public void SaveApiKey(string apiKey) { }
+        public bool GetEnableHighDpiTiling() => true;
+        public void SetEnableHighDpiTiling(bool enabled) { }
+        public string GetSelectedGeminiModel() => "gemini-2.5-flash";
+        public void SetSelectedGeminiModel(string model) { }
     }
 
     private class DummyGeminiApiService : IGeminiApiService
