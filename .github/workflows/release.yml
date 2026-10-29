@@ -2,8 +2,11 @@ name: WPF CD Release
 
 on:
   push:
+    branches:
+      - master
     tags:
       - 'v*'
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -15,17 +18,50 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup .NET 9
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
 
+      - name: Determine Version and Tag
+        id: versioning
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_REF_TYPE -eq 'tag') {
+              $tag = $env:GITHUB_REF_NAME
+              $version = $tag.TrimStart('v')
+              Write-Host "Triggered by tag push: $tag (version $version)"
+              Write-Output "RELEASE_TAG=$tag" >> $env:GITHUB_ENV
+              Write-Output "SKIP_RELEASE=false" >> $env:GITHUB_ENV
+          } else {
+              [xml]$props = Get-Content Directory.Build.props
+              $version = $props.Project.PropertyGroup.Version.Trim()
+              $tag = "v$version"
+              Write-Host "Detected version from Directory.Build.props: $version (tag $tag)"
+              Write-Output "RELEASE_TAG=$tag" >> $env:GITHUB_ENV
+
+              $tagExists = git tag -l $tag
+              if ($tagExists -and $env:GITHUB_EVENT_NAME -ne 'workflow_dispatch') {
+                  Write-Host "Tag $tag already exists in repository. Skipping release creation."
+                  Write-Output "SKIP_RELEASE=true" >> $env:GITHUB_ENV
+              } else {
+                  Write-Host "New version $version detected. Proceeding with release $tag."
+                  Write-Output "SKIP_RELEASE=false" >> $env:GITHUB_ENV
+              }
+          }
+
       - name: Publish WPF application
+        if: env.SKIP_RELEASE != 'true'
         run: dotnet publish src/DrawingVerifier.UI/DrawingVerifier.UI.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o ./publish
 
       - name: Create GitHub Release
+        if: env.SKIP_RELEASE != 'true'
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: Release ${{ env.RELEASE_TAG }}
           files: ./publish/*.exe
           generate_release_notes: true

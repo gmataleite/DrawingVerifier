@@ -44,7 +44,8 @@ public class GeminiApiHttpClient : IGeminiApiService
         // 1. Map generationConfig with response_mime_type and response_schema
         var generationConfig = new Dictionary<string, object?>
         {
-            ["response_mime_type"] = "application/json"
+            ["response_mime_type"] = "application/json",
+            ["temperature"] = 0.0, // 0.0 ensures maximum determinism (no hallucinations)
         };
 
         if (!string.IsNullOrWhiteSpace(skill.OutputSchemaJson))
