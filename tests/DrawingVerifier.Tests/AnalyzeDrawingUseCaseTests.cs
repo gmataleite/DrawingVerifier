@@ -173,7 +173,7 @@ public class AnalyzeDrawingUseCaseTests
         {
             Metadata = new DrawingMetadata
             {
-                Cliente = "Vale S.A.",
+                Cliente = "Industrial Client Inc.",
                 NumeroDesenho = "30-260096-05-07-00_A",
                 Revisao = "A",
                 DesenhadoPor = "Leonardo",
@@ -330,7 +330,7 @@ public class AnalyzeDrawingUseCaseTests
                     Guid.NewGuid(),
                     "Overmetal Must Be 100mm",
                     "if(PossuiSobremetal, ValorSobremetal == 100, true)",
-                    "[Balloon {BalaoRef}] Out of RELCO standard: Overmetal indicated on view is {ValorSobremetal}mm (Expected: 100mm)."),
+                    "[Balloon {BalaoRef}] Out of standard: Overmetal indicated on view is {ValorSobremetal}mm (Expected: 100mm)."),
 
                 new ValidationRule(
                     Guid.NewGuid(),
@@ -360,7 +360,7 @@ public class AnalyzeDrawingUseCaseTests
         Assert.False(report.IsValid);
         Assert.Equal(4, report.Errors.Count);
 
-        Assert.Contains(report.Errors, e => e == "[Balloon 3] Out of RELCO standard: Overmetal indicated on view is 120mm (Expected: 100mm).");
+        Assert.Contains(report.Errors, e => e == "[Balloon 3] Out of standard: Overmetal indicated on view is 120mm (Expected: 100mm).");
         Assert.Contains(report.Errors, e => e == "[Balloon 3] BOM cut length does not match view dimension. (View: 500 + 100. BOM: 620mm).");
         Assert.Contains(report.Errors, e => e == "[Balloon 3] Diameter mismatch. (View: Ø400. BOM: Ø450).");
         Assert.Contains(report.Errors, e => e == "[Balloon 3] Sheet thickness mismatch. (View: #2. BOM: #3).");
