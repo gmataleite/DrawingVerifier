@@ -3,6 +3,7 @@ name: WPF CD Release
 on:
   push:
     branches:
+      - main
       - master
     tags:
       - 'v*'
