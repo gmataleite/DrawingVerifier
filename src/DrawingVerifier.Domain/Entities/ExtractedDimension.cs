@@ -1,33 +1,70 @@
 namespace DrawingVerifier.Domain.Entities;
 
+using System.Text.Json.Serialization;
+
 /// <summary>
 /// Represents a geometric dimension extracted from a technical drawing view.
 /// </summary>
 public sealed record ExtractedDimension
 {
     /// <summary>
-    /// Reference balloon identifier or position in the view (e.g., "1", "12", "A").
+    /// Reference balloon identifier (e.g., 1, 2, 5).
     /// </summary>
-    public string BalloonRef { get; init; } = string.Empty;
+    public int? BalaoRef { get; init; }
 
     /// <summary>
-    /// Nominal/base numeric value of the dimension, used in calculations and mathematical rules.
+    /// Nominal/base finished dimension in millimeters.
     /// </summary>
-    public double BaseDimension { get; init; }
+    public double? CotaBaseMm { get; init; }
 
     /// <summary>
-    /// Additional dimension information (e.g., tolerances "±0.05", "2x" multiplier, surface finish).
+    /// Excess material / overmetal value in mm (e.g. 100 if "+ 100 (Sobremetal)", 0 or null if none).
     /// </summary>
+    public double? ValorSobremetalMm { get; init; }
+
+    /// <summary>
+    /// Indicates whether overmetal was specified for this dimension.
+    /// </summary>
+    public bool PossuiSobremetal { get; init; }
+
+    /// <summary>
+    /// Internal/nominal diameter indicated on the view in millimeters.
+    /// </summary>
+    public double? DiametroVistaMm { get; init; }
+
+    /// <summary>
+    /// Wall/plate thickness indicated on the view in millimeters.
+    /// </summary>
+    public double? EspessuraVistaMm { get; init; }
+
+    // Backward-compatibility aliases
+    [JsonIgnore]
+    public string BalloonRef => BalaoRef?.ToString() ?? string.Empty;
+
+    [JsonIgnore]
+    public double BaseDimension => CotaBaseMm ?? 0.0;
+
     public string? AdditionalText { get; init; }
 
     public ExtractedDimension()
     {
     }
 
-    public ExtractedDimension(string balloonRef, double baseDimension, string? additionalText = null)
+    public ExtractedDimension(
+        int? balaoRef,
+        double? cotaBaseMm,
+        double? valorSobremetalMm = null,
+        bool possuiSobremetal = false,
+        double? diametroVistaMm = null,
+        double? espessuraVistaMm = null,
+        string? additionalText = null)
     {
-        BalloonRef = balloonRef;
-        BaseDimension = baseDimension;
+        BalaoRef = balaoRef;
+        CotaBaseMm = cotaBaseMm;
+        ValorSobremetalMm = valorSobremetalMm;
+        PossuiSobremetal = possuiSobremetal;
+        DiametroVistaMm = diametroVistaMm;
+        EspessuraVistaMm = espessuraVistaMm;
         AdditionalText = additionalText;
     }
 }
