@@ -9,15 +9,31 @@ using LiteDB;
 /// </summary>
 public class SkillLiteDbRepository : ISkillRepository
 {
-    public const string DefaultConnectionString = "Filename=DrawingVerifier.db;Connection=shared";
+    public static string DefaultDatabasePath => Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "DrawingVerifier",
+        "DrawingVerifier.db");
+
+    public static string DefaultConnectionString => $"Filename={DefaultDatabasePath};Connection=shared";
 
     private readonly string _connectionString;
 
-    public SkillLiteDbRepository(string connectionString = DefaultConnectionString)
+    public SkillLiteDbRepository(string? connectionString = null)
     {
-        _connectionString = string.IsNullOrWhiteSpace(connectionString)
-            ? DefaultConnectionString
-            : connectionString;
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            var dbDir = Path.GetDirectoryName(DefaultDatabasePath);
+            if (!string.IsNullOrEmpty(dbDir))
+            {
+                Directory.CreateDirectory(dbDir);
+            }
+
+            _connectionString = DefaultConnectionString;
+        }
+        else
+        {
+            _connectionString = connectionString;
+        }
     }
 
     public Task<VerificationSkill?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)

@@ -55,7 +55,18 @@ jobs:
 
       - name: Publish WPF application
         if: env.SKIP_RELEASE != 'true'
-        run: dotnet publish src/DrawingVerifier.UI/DrawingVerifier.UI.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o ./publish
+        shell: pwsh
+        run: |
+          dotnet publish src/DrawingVerifier.UI/DrawingVerifier.UI.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:IncludeAllContentForSelfExtract=true `
+            -o ./publish
+
+          Compress-Archive -Path ./publish/DrawingVerifier.UI.exe -DestinationPath "./publish/DrawingVerifier-win-x64-$($env:RELEASE_TAG).zip"
 
       - name: Create GitHub Release
         if: env.SKIP_RELEASE != 'true'
@@ -63,5 +74,7 @@ jobs:
         with:
           tag_name: ${{ env.RELEASE_TAG }}
           name: Release ${{ env.RELEASE_TAG }}
-          files: ./publish/*.exe
+          files: |
+            ./publish/*.exe
+            ./publish/*.zip
           generate_release_notes: true
