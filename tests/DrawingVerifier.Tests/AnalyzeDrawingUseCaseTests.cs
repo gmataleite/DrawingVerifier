@@ -1,10 +1,15 @@
 namespace DrawingVerifier.Tests;
 
+using System;
+using System.IO;
+using System.Threading.Tasks;
 using DrawingVerifier.Application.Services;
 using DrawingVerifier.Application.UseCases;
 using DrawingVerifier.Domain.Entities;
 using DrawingVerifier.Domain.Interfaces;
 using DrawingVerifier.Infrastructure.Data;
+using DrawingVerifier.Infrastructure.Services;
+using QuestPDF.Fluent;
 using Xunit;
 
 public class AnalyzeDrawingUseCaseTests
@@ -364,5 +369,162 @@ public class AnalyzeDrawingUseCaseTests
         Assert.Contains(report.Errors, e => e == "[Balloon 3] BOM cut length does not match view dimension. (View: 500 + 100. BOM: 620mm).");
         Assert.Contains(report.Errors, e => e == "[Balloon 3] Diameter mismatch. (View: Ø400. BOM: Ø450).");
         Assert.Contains(report.Errors, e => e == "[Balloon 3] Sheet thickness mismatch. (View: #2. BOM: #3).");
+    }
+
+    [Fact]
+    public async Task SpatialBoundingBoxValidation_EmitsWarning_WhenBalloonAndDimensionAreDistant()
+    {
+        var data = new ExtractedDrawingData
+        {
+            Metadata = new DrawingMetadata
+            {
+                Cliente = "Test Client",
+                NumeroDesenho = "DWG-200",
+                DesenhadoPor = "Engineer",
+                AprovadoPor = "Lead",
+                MassaTotalNotaKg = 50.0
+            },
+            BomItems =
+            [
+                new ExtractedBomItem
+                {
+                    Item = 8,
+                    Quantidade = 1,
+                    ComprimentoBomMm = 1920.0,
+                    PossuiBalaoNasVistas = true
+                }
+            ],
+            Dimensions =
+            [
+                new ExtractedDimension
+                {
+                    BalaoRef = 8,
+                    CotaBaseMm = 956.0,
+                    PossuiSobremetal = true,
+                    ValorSobremetalMm = 100.0,
+                    RaciocinioVisual = "Traced leader line",
+                    // Far top-left balloon, far bottom-right dimension (distance ~ 1180 units)
+                    BalaoBoundingBox = [50, 50, 80, 80],
+                    CotaBoundingBox = [900, 900, 930, 930]
+                }
+            ]
+        };
+
+        var skill = new VerificationSkill
+        {
+            Name = "Spatial Test Skill",
+            Rules = []
+        };
+
+        var useCase = new AnalyzeDrawingUseCase(new MockGeminiService(data), new NCalcRuleEvaluator());
+        var report = await useCase.ExecuteAsync("drawing.pdf", "valid-base64", skill);
+
+        Assert.Contains(report.Warnings, w => w.Contains("[Balloon 8] Spatial distance between balloon and dimension is unusually large"));
+    }
+
+    [Fact]
+    public async Task SpatialBoundingBoxValidation_DoesNotEmitWarning_WhenBalloonAndDimensionAreClose()
+    {
+        var data = new ExtractedDrawingData
+        {
+            Metadata = new DrawingMetadata
+            {
+                Cliente = "Test Client",
+                NumeroDesenho = "DWG-201",
+                DesenhadoPor = "Engineer",
+                AprovadoPor = "Lead",
+                MassaTotalNotaKg = 50.0
+            },
+            BomItems =
+            [
+                new ExtractedBomItem
+                {
+                    Item = 8,
+                    Quantidade = 1,
+                    ComprimentoBomMm = 1920.0,
+                    PossuiBalaoNasVistas = true
+                }
+            ],
+            Dimensions =
+            [
+                new ExtractedDimension
+                {
+                    BalaoRef = 8,
+                    CotaBaseMm = 1821.0,
+                    PossuiSobremetal = true,
+                    ValorSobremetalMm = 100.0,
+                    RaciocinioVisual = "Balloon 8 points directly to vertical duct",
+                    // Nearby coordinates (~120 units apart)
+                    BalaoBoundingBox = [300, 400, 340, 440],
+                    CotaBoundingBox = [320, 280, 360, 330]
+                }
+            ]
+        };
+
+        var skill = new VerificationSkill
+        {
+            Name = "Spatial Close Skill",
+            Rules = []
+        };
+
+        var useCase = new AnalyzeDrawingUseCase(new MockGeminiService(data), new NCalcRuleEvaluator());
+        var report = await useCase.ExecuteAsync("drawing.pdf", "valid-base64", skill);
+
+        Assert.DoesNotContain(report.Warnings, w => w.Contains("Spatial distance"));
+    }
+
+    [Fact]
+    public void SettingsService_PersistsTilingAndModelPreferences()
+    {
+        var tempSettingsFile = Path.Combine(Path.GetTempPath(), $"settings_{Guid.NewGuid()}.dat");
+        try
+        {
+            var settings = new WindowsSettingsService(tempSettingsFile);
+
+            // Default checks
+            Assert.True(settings.GetEnableHighDpiTiling());
+            Assert.Equal("gemini-2.5-flash", settings.GetSelectedGeminiModel());
+
+            // Update checks
+            settings.SetEnableHighDpiTiling(false);
+            settings.SetSelectedGeminiModel("gemini-2.5-pro");
+
+            Assert.False(settings.GetEnableHighDpiTiling());
+            Assert.Equal("gemini-2.5-pro", settings.GetSelectedGeminiModel());
+        }
+        finally
+        {
+            if (File.Exists(tempSettingsFile))
+            {
+                File.Delete(tempSettingsFile);
+            }
+            var dir = Path.GetDirectoryName(tempSettingsFile);
+            var prefFile = Path.Combine(dir ?? "", "appsettings.json");
+            if (File.Exists(prefFile))
+            {
+                File.Delete(prefFile);
+            }
+        }
+    }
+
+    [Fact]
+    public void PdfRasterizerService_GeneratesOverviewAndFourQuadrants()
+    {
+        QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+        var pdfBytes = QuestPDF.Fluent.Document.Create(container =>
+        {
+            container.Page(page =>
+            {
+                page.Size(QuestPDF.Helpers.PageSizes.A4);
+                page.Content().Text("Test Technical Drawing Page");
+            });
+        }).GeneratePdf();
+
+        var rasterizer = new PdfRasterizerService();
+        var tiles = rasterizer.RasterizeAndTile(pdfBytes, dpi: 150);
+
+        Assert.NotNull(tiles);
+        Assert.Equal(5, tiles.Count); // 1 overview + 4 quadrants
+        Assert.All(tiles, tile => Assert.True(tile.Length > 0));
     }
 }
