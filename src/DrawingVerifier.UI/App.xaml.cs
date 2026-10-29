@@ -74,6 +74,7 @@ public partial class App : System.Windows.Application
         services.AddSingleton<ISettingsService, WindowsSettingsService>();
         services.AddSingleton<ISkillRepository>(_ => new SkillLiteDbRepository());
         services.AddTransient<IRuleEvaluator, NCalcRuleEvaluator>();
+        services.AddTransient<IPdfRasterizerService, PdfRasterizerService>();
         services.AddHttpClient<IGeminiApiService, GeminiApiHttpClient>();
         services.AddTransient<IReportGenerator, QuestPdfReportGenerator>();
         services.AddTransient<AnalyzeDrawingUseCase>();

@@ -27,6 +27,15 @@ public static class DatabaseSeeder
           * Inspect the APPROXIMATE TOTAL MASS note ('massaTotalNotaKg'): it must contain a numeric value in kg (e.g., 972.1 kg). If empty, zero, or marked as 'N/A', record it so it can be flagged as critical: 'Update total mass note with the actual 3D model calculated value (remove N/A)'.
           * Verify order-of-magnitude consistency compared to the sum of individual BOM item masses ('massaUnitariaKg' multiplied by 'quantidade').
 
+        - VISUAL CHAIN-OF-THOUGHT & BALLOON LEADER-LINE TRACING:
+          * For each item in the BOM, locate its corresponding balloon circle on the views.
+          * Mentally trace the leader line from the balloon circle to the exact surface/segment it touches.
+          * Record in 'raciocinioVisual' a concise step-by-step description of this path (e.g., 'Balloon 8 points via leader line down to the vertical straight duct; the dimension strictly parallel to this duct is 1821 + 100').
+          * Extract ONLY the dimension line that is strictly parallel and contiguous to the targeted segment.
+          * Extract normalized bounding boxes [ymin, xmin, ymax, xmax] (integers 0 to 1000):
+            - 'balaoBoundingBox': boundary of the balloon circle.
+            - 'cotaBoundingBox': boundary of the dimension text.
+
         - OVERMETAL & DIMENSION COMPARISON (VIEWS vs. BOM):
           * Identify all straight duct segments and elbows across the views.
           * FIXED OVERMETAL RULE (100mm): Standard fabrication practices require exactly 100mm overmetal (excess material). If any other value is indicated (e.g., +50), flag an error. Whenever a view dimension indicates base dimension + 100 overmetal (e.g., '540 + 100 (Sobremetal)'), extract cotaBaseMm: 540, possuiSobremetal: true, and valorSobremetalMm: 100. The corresponding BOM cut length must be the exact sum (e.g., 640).
@@ -112,7 +121,16 @@ public static class DatabaseSeeder
                   "valorSobremetalMm": { "type": "number" },
                   "possuiSobremetal": { "type": "boolean" },
                   "diametroVistaMm": { "type": "number" },
-                  "espessuraVistaMm": { "type": "number" }
+                  "espessuraVistaMm": { "type": "number" },
+                  "raciocinioVisual": { "type": "string" },
+                  "balaoBoundingBox": {
+                    "type": "array",
+                    "items": { "type": "integer" }
+                  },
+                  "cotaBoundingBox": {
+                    "type": "array",
+                    "items": { "type": "integer" }
+                  }
                 },
                 "required": ["balaoRef", "cotaBaseMm"]
               }
@@ -215,8 +233,8 @@ public static class DatabaseSeeder
         {
             // Automatic migration: If the existing skill has old legacy rules or schema, upgrade it
             if (existingSkill.Rules.Count < 10
-                || !existingSkill.OutputSchemaJson.Contains("diametroBomMm", StringComparison.OrdinalIgnoreCase)
-                || !existingSkill.SystemPrompt.Contains("Senior Quality Assurance Engineer", StringComparison.OrdinalIgnoreCase))
+                || !existingSkill.OutputSchemaJson.Contains("raciocinioVisual", StringComparison.OrdinalIgnoreCase)
+                || !existingSkill.SystemPrompt.Contains("VISUAL CHAIN-OF-THOUGHT", StringComparison.OrdinalIgnoreCase))
             {
                 existingSkill.SystemPrompt = DefaultSystemPrompt;
                 existingSkill.OutputSchemaJson = DefaultOutputSchemaJson;

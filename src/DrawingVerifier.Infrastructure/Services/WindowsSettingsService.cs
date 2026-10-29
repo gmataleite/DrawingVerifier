@@ -1,7 +1,9 @@
 namespace DrawingVerifier.Infrastructure.Services;
 
+using System.IO;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using DrawingVerifier.Application.Interfaces;
 
 /// <summary>
@@ -11,8 +13,12 @@ public class WindowsSettingsService : ISettingsService
 {
     private const string AppFolderName = "DrawingVerifier";
     private const string SettingsFileName = "settings.dat";
+    private const string PreferencesFileName = "appsettings.json";
+
+    public const string DefaultGeminiModel = "gemini-2.5-flash";
 
     private readonly string _settingsFilePath;
+    private readonly string _preferencesFilePath;
 
     public WindowsSettingsService()
         : this(Path.Combine(
@@ -22,10 +28,12 @@ public class WindowsSettingsService : ISettingsService
     {
     }
 
-    internal WindowsSettingsService(string settingsFilePath)
+    public WindowsSettingsService(string settingsFilePath)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(settingsFilePath);
         _settingsFilePath = settingsFilePath;
+        var dir = Path.GetDirectoryName(settingsFilePath) ?? string.Empty;
+        _preferencesFilePath = Path.Combine(dir, PreferencesFileName);
     }
 
     public string? GetApiKey()
@@ -106,5 +114,78 @@ public class WindowsSettingsService : ISettingsService
         {
             throw new InvalidOperationException($"Failed to save the encrypted API key: {ex.Message}", ex);
         }
+    }
+
+    public bool GetEnableHighDpiTiling()
+    {
+        var prefs = LoadPreferences();
+        return prefs.EnableHighDpiTiling;
+    }
+
+    public void SetEnableHighDpiTiling(bool enabled)
+    {
+        var prefs = LoadPreferences();
+        prefs.EnableHighDpiTiling = enabled;
+        SavePreferences(prefs);
+    }
+
+    public string GetSelectedGeminiModel()
+    {
+        var prefs = LoadPreferences();
+        return string.IsNullOrWhiteSpace(prefs.SelectedGeminiModel) ? DefaultGeminiModel : prefs.SelectedGeminiModel;
+    }
+
+    public void SetSelectedGeminiModel(string model)
+    {
+        var prefs = LoadPreferences();
+        prefs.SelectedGeminiModel = string.IsNullOrWhiteSpace(model) ? DefaultGeminiModel : model.Trim();
+        SavePreferences(prefs);
+    }
+
+    private AppPreferences LoadPreferences()
+    {
+        try
+        {
+            if (File.Exists(_preferencesFilePath))
+            {
+                var json = File.ReadAllText(_preferencesFilePath);
+                var prefs = JsonSerializer.Deserialize<AppPreferences>(json);
+                if (prefs != null)
+                {
+                    return prefs;
+                }
+            }
+        }
+        catch
+        {
+            // Fall back to defaults
+        }
+
+        return new AppPreferences();
+    }
+
+    private void SavePreferences(AppPreferences prefs)
+    {
+        try
+        {
+            var directory = Path.GetDirectoryName(_preferencesFilePath);
+            if (!string.IsNullOrEmpty(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            var json = JsonSerializer.Serialize(prefs, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(_preferencesFilePath, json);
+        }
+        catch
+        {
+            // Suppress IO failures on writing non-critical preferences
+        }
+    }
+
+    private class AppPreferences
+    {
+        public bool EnableHighDpiTiling { get; set; } = true;
+        public string SelectedGeminiModel { get; set; } = DefaultGeminiModel;
     }
 }

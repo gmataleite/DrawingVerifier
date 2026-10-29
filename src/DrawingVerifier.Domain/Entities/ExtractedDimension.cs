@@ -37,6 +37,21 @@ public sealed record ExtractedDimension
     /// </summary>
     public double? EspessuraVistaMm { get; init; }
 
+    /// <summary>
+    /// Step-by-step visual chain-of-thought tracing the leader line from balloon to the piece and its dimension.
+    /// </summary>
+    public string? RaciocinioVisual { get; init; }
+
+    /// <summary>
+    /// Normalized coordinates [ymin, xmin, ymax, xmax] (0–1000) of the balloon circle.
+    /// </summary>
+    public List<int>? BalaoBoundingBox { get; init; }
+
+    /// <summary>
+    /// Normalized coordinates [ymin, xmin, ymax, xmax] (0–1000) of the dimension text.
+    /// </summary>
+    public List<int>? CotaBoundingBox { get; init; }
+
     // Backward-compatibility aliases
     [JsonIgnore]
     public string BalloonRef => BalaoRef?.ToString() ?? string.Empty;
@@ -57,7 +72,10 @@ public sealed record ExtractedDimension
         bool possuiSobremetal = false,
         double? diametroVistaMm = null,
         double? espessuraVistaMm = null,
-        string? additionalText = null)
+        string? additionalText = null,
+        string? raciocinioVisual = null,
+        List<int>? balaoBoundingBox = null,
+        List<int>? cotaBoundingBox = null)
     {
         BalaoRef = balaoRef;
         CotaBaseMm = cotaBaseMm;
@@ -66,5 +84,8 @@ public sealed record ExtractedDimension
         DiametroVistaMm = diametroVistaMm;
         EspessuraVistaMm = espessuraVistaMm;
         AdditionalText = additionalText;
+        RaciocinioVisual = raciocinioVisual;
+        BalaoBoundingBox = balaoBoundingBox;
+        CotaBoundingBox = cotaBoundingBox;
     }
 }
