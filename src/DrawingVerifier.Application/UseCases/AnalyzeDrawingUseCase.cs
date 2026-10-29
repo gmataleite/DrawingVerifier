@@ -12,6 +12,24 @@ using DrawingVerifier.Domain.Interfaces;
 /// </summary>
 public class AnalyzeDrawingUseCase
 {
+    private static readonly string[] ItemLevelKeywords =
+    [
+        "CotaBase",
+        "ComprimentoBom",
+        "PossuiSobremetal",
+        "ValorSobremetal",
+        "DiametroVista",
+        "DiametroBom",
+        "EspessuraVista",
+        "EspessuraBom",
+        "Quantidade",
+        "BalaoRef",
+        "BaseDimension",
+        "BomDimension",
+        "Quantity",
+        "BalloonRef"
+    ];
+
     private readonly IGeminiApiService _geminiApiService;
     private readonly IRuleEvaluator _ruleEvaluator;
 
@@ -72,6 +90,7 @@ public class AnalyzeDrawingUseCase
             return report;
         }
 
+        var metadata = extractedData.Metadata ?? new DrawingMetadata();
         var dimensions = extractedData.Dimensions ?? [];
         var bomItems = extractedData.BomItems ?? [];
 
@@ -85,59 +104,107 @@ public class AnalyzeDrawingUseCase
             report.Warnings.Add("No Bill of Materials (BOM) items were extracted from the drawing.");
         }
 
-        foreach (var dimension in dimensions)
+        // Calculate document-level metrics
+        var camposLegendaVaziosCount = 0;
+        if (string.IsNullOrWhiteSpace(metadata.Cliente)) camposLegendaVaziosCount++;
+        if (string.IsNullOrWhiteSpace(metadata.NumeroDesenho)) camposLegendaVaziosCount++;
+        if (string.IsNullOrWhiteSpace(metadata.DesenhadoPor)) camposLegendaVaziosCount++;
+        if (string.IsNullOrWhiteSpace(metadata.AprovadoPor)) camposLegendaVaziosCount++;
+
+        var somaMassaBomKg = bomItems.Sum(b => (double)b.Quantidade * (b.MassaUnitariaKg ?? 0.0));
+        var itensBomSemBalaoCount = bomItems.Count(b => !b.PossuiBalaoNasVistas);
+
+        var documentParameters = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
         {
-            if (string.IsNullOrWhiteSpace(dimension.BalloonRef))
-            {
-                continue;
-            }
+            ["MassaTotalNotaKg"] = metadata.MassaTotalNotaKg ?? 0.0,
+            ["SomaMassaBomKg"] = somaMassaBomKg,
+            ["PossuiBlocoSoldaTopo"] = metadata.PossuiBlocoSoldaTopo,
+            ["PossuiBlocoRugosidade"] = metadata.PossuiBlocoRugosidade,
+            ["PossuiBlocoReferenciaChapas"] = metadata.PossuiBlocoReferenciaChapas,
+            ["ExtremidadesSemConexao"] = metadata.ExtremidadesSemConexao,
+            ["ItensBomSemBalaoCount"] = itensBomSemBalaoCount,
+            ["CamposLegendaVaziosCount"] = camposLegendaVaziosCount
+        };
 
-            var matchingBomItem = bomItems.FirstOrDefault(b => MatchBalloonWithBomItem(dimension.BalloonRef, b.Item));
+        if (skill.Rules != null && skill.Rules.Count > 0)
+        {
+            var documentRules = skill.Rules.Where(r => !IsItemLevelRule(r)).ToList();
+            var itemRules = skill.Rules.Where(IsItemLevelRule).ToList();
 
-            if (matchingBomItem == null)
+            // 1. Evaluate Document-Level Rules ONLY ONCE per drawing (Anti-duplication)
+            foreach (var rule in documentRules)
             {
-                report.Warnings.Add($"Reference balloon '{dimension.BalloonRef}' (dimension {dimension.BaseDimension}) was not found in the Bill of Materials (BOM).");
-                continue;
-            }
-
-            double bomDimension = 0.0;
-            if (!string.IsNullOrWhiteSpace(matchingBomItem.Dimensions))
-            {
-                var sanitized = matchingBomItem.Dimensions.Trim().Replace(',', '.');
-                if (double.TryParse(sanitized, NumberStyles.Any, CultureInfo.InvariantCulture, out var parsed))
+                if (!_ruleEvaluator.Evaluate(rule, documentParameters, out var errorMessage))
                 {
-                    bomDimension = parsed;
+                    if (!string.IsNullOrWhiteSpace(errorMessage))
+                    {
+                        report.Errors.Add(errorMessage);
+                    }
                 }
             }
 
-            var parameters = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
+            // 2. Evaluate Item-Level Rules for each dimension matching a BOM item
+            if (itemRules.Count > 0)
             {
-                ["BaseDimension"] = dimension.BaseDimension,
-                ["BomDimension"] = bomDimension,
-                ["Quantity"] = matchingBomItem.Quantity,
-                ["Dimensions"] = bomDimension != 0.0 || matchingBomItem.Dimensions?.Trim() == "0" ? bomDimension : (matchingBomItem.Dimensions ?? string.Empty),
-                ["BalloonRef"] = dimension.BalloonRef,
-                ["Item"] = matchingBomItem.Item,
-                ["AdditionalText"] = dimension.AdditionalText ?? string.Empty,
-
-                // Backward-compatibility aliases for existing rules
-                ["CotaBase"] = dimension.BaseDimension,
-                ["CotaBom"] = bomDimension,
-                ["Quantidade"] = matchingBomItem.Quantity,
-                ["Dimensoes"] = bomDimension != 0.0 || matchingBomItem.Dimensions?.Trim() == "0" ? bomDimension : (matchingBomItem.Dimensions ?? string.Empty),
-                ["BalaoRef"] = dimension.BalloonRef,
-                ["TextoAdicional"] = dimension.AdditionalText ?? string.Empty
-            };
-
-            if (skill.Rules != null)
-            {
-                foreach (var rule in skill.Rules)
+                foreach (var dimension in dimensions)
                 {
-                    if (!_ruleEvaluator.Evaluate(rule, parameters, out var errorMessage))
+                    var balloonRefInt = dimension.BalaoRef;
+                    if (!balloonRefInt.HasValue && int.TryParse(dimension.BalloonRef, out var parsedRef))
                     {
-                        if (!string.IsNullOrWhiteSpace(errorMessage))
+                        balloonRefInt = parsedRef;
+                    }
+
+                    if (!balloonRefInt.HasValue)
+                    {
+                        continue;
+                    }
+
+                    var matchingBomItem = bomItems.FirstOrDefault(b => b.Item == balloonRefInt.Value);
+                    if (matchingBomItem == null)
+                    {
+                        report.Warnings.Add($"Reference balloon '{balloonRefInt}' was not found in the Bill of Materials (BOM).");
+                        continue;
+                    }
+
+                    var comprimentoBom = matchingBomItem.ComprimentoBomMm ?? 0.0;
+                    if (comprimentoBom == 0.0 && !string.IsNullOrWhiteSpace(matchingBomItem.DimensoesTextoBruto))
+                    {
+                        var sanitized = matchingBomItem.DimensoesTextoBruto.Trim().Replace(',', '.');
+                        if (double.TryParse(sanitized, NumberStyles.Any, CultureInfo.InvariantCulture, out var parsedVal))
                         {
-                            report.Errors.Add(errorMessage);
+                            comprimentoBom = parsedVal;
+                        }
+                    }
+
+                    var itemParameters = new Dictionary<string, object>(documentParameters, StringComparer.OrdinalIgnoreCase)
+                    {
+                        ["BalaoRef"] = balloonRefInt.Value,
+                        ["PossuiSobremetal"] = dimension.PossuiSobremetal,
+                        ["CotaBase"] = dimension.CotaBaseMm ?? 0.0,
+                        ["ValorSobremetal"] = dimension.ValorSobremetalMm ?? 0.0,
+                        ["ComprimentoBom"] = comprimentoBom,
+                        ["DiametroVista"] = dimension.DiametroVistaMm ?? 0.0,
+                        ["DiametroBom"] = matchingBomItem.DiametroBomMm ?? 0.0,
+                        ["EspessuraVista"] = dimension.EspessuraVistaMm ?? 0.0,
+                        ["EspessuraBom"] = matchingBomItem.EspessuraBomMm ?? 0.0,
+                        ["Quantidade"] = matchingBomItem.Quantidade,
+
+                        // Backward-compatibility aliases
+                        ["BaseDimension"] = dimension.CotaBaseMm ?? 0.0,
+                        ["BomDimension"] = comprimentoBom,
+                        ["Quantity"] = matchingBomItem.Quantidade,
+                        ["BalloonRef"] = balloonRefInt.Value.ToString(),
+                        ["Item"] = matchingBomItem.Item
+                    };
+
+                    foreach (var rule in itemRules)
+                    {
+                        if (!_ruleEvaluator.Evaluate(rule, itemParameters, out var errorMessage))
+                        {
+                            if (!string.IsNullOrWhiteSpace(errorMessage))
+                            {
+                                report.Errors.Add($"[Balloon {balloonRefInt.Value}] {errorMessage}");
+                            }
                         }
                     }
                 }
@@ -148,26 +215,13 @@ public class AnalyzeDrawingUseCase
         return report;
     }
 
-    private static bool MatchBalloonWithBomItem(string balloonRef, string? bomItem)
+    private static bool IsItemLevelRule(ValidationRule rule)
     {
-        if (string.IsNullOrWhiteSpace(balloonRef) || string.IsNullOrWhiteSpace(bomItem))
+        if (string.IsNullOrWhiteSpace(rule.Expression))
         {
             return false;
         }
 
-        var cleanBalloon = balloonRef.Trim();
-        var cleanBom = bomItem.Trim();
-
-        if (string.Equals(cleanBalloon, cleanBom, StringComparison.OrdinalIgnoreCase))
-        {
-            return true;
-        }
-
-        if (int.TryParse(cleanBalloon, out var balloonInt) && int.TryParse(cleanBom, out var bomInt))
-        {
-            return balloonInt == bomInt;
-        }
-
-        return false;
+        return ItemLevelKeywords.Any(keyword => rule.Expression.Contains(keyword, StringComparison.OrdinalIgnoreCase));
     }
 }
