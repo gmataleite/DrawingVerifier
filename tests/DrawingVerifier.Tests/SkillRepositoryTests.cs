@@ -57,10 +57,10 @@ public class SkillRepositoryTests
             Assert.Single(skills);
             var seededSkill = skills[0];
             Assert.Equal(DatabaseSeeder.DefaultSkillName, seededSkill.Name);
-            Assert.Equal(8, seededSkill.Rules.Count);
-            Assert.Contains(seededSkill.Rules, r => r.Name == "MassNoteCheck");
-            Assert.Contains(seededSkill.Rules, r => r.Name == "TitleBlockCheck");
-            Assert.Contains(seededSkill.Rules, r => r.Name == "OvermetalLengthMatch");
+            Assert.Equal(10, seededSkill.Rules.Count);
+            Assert.Contains(seededSkill.Rules, r => r.Name == "Check Total Mass Note");
+            Assert.Contains(seededSkill.Rules, r => r.Name == "Check Title Block Fields");
+            Assert.Contains(seededSkill.Rules, r => r.Name == "Overmetal Length Math");
 
             // 2. Simulate legacy skill with 1 rule and test migration
             seededSkill.Rules = [new ValidationRule(Guid.NewGuid(), "OldRule", "1==1", "Old")];
@@ -70,7 +70,7 @@ public class SkillRepositoryTests
             DatabaseSeeder.SeedDefaultSkills(repo);
             var reloaded = await repo.GetByIdAsync(seededSkill.Id);
             Assert.NotNull(reloaded);
-            Assert.Equal(8, reloaded.Rules.Count);
+            Assert.Equal(10, reloaded.Rules.Count);
         }
         finally
         {
