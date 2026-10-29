@@ -173,7 +173,7 @@ public class AnalyzeDrawingUseCaseTests
         {
             Metadata = new DrawingMetadata
             {
-                Cliente = "Vale S.A.",
+                Cliente = "Industrial Client Inc.",
                 NumeroDesenho = "30-260096-05-07-00_A",
                 Revisao = "A",
                 DesenhadoPor = "Leonardo",
@@ -227,5 +227,142 @@ public class AnalyzeDrawingUseCaseTests
 
         Assert.True(report.IsValid);
         Assert.Empty(report.Errors);
+    }
+
+    [Fact]
+    public async Task DynamicErrorMessageInterpolation_InterpolatesDocumentLevelRuleParameters()
+    {
+        var data = new ExtractedDrawingData
+        {
+            Metadata = new DrawingMetadata
+            {
+                Cliente = "Test Client",
+                NumeroDesenho = "DWG-100",
+                DesenhadoPor = "Eng",
+                AprovadoPor = "Lead",
+                MassaTotalNotaKg = 100.0,
+                PossuiBlocoSoldaTopo = true,
+                PossuiBlocoRugosidade = true,
+                PossuiBlocoReferenciaChapas = true,
+                ExtremidadesSemConexao = 0
+            },
+            BomItems =
+            [
+                new ExtractedBomItem
+                {
+                    Item = 1,
+                    Quantidade = 1,
+                    MassaUnitariaKg = 80.0, // 80kg != 100kg (> 5% deviation)
+                    PossuiBalaoNasVistas = true
+                }
+            ],
+            Dimensions = []
+        };
+
+        var skill = new VerificationSkill
+        {
+            Name = "Dynamic Error Message Test",
+            Rules =
+            [
+                new ValidationRule(
+                    Guid.NewGuid(),
+                    "Compare Mass (BOM vs Note)",
+                    "if(MassaTotalNotaKg > 0 && SomaMassaBomKg > 0, Abs(MassaTotalNotaKg - SomaMassaBomKg) < (MassaTotalNotaKg * 0.05), true)",
+                    "Warning: Declared mass in note ({MassaTotalNotaKg}kg) deviates by more than 5% from BOM items total ({SomaMassaBomKg}kg).")
+            ]
+        };
+
+        var evaluator = new NCalcRuleEvaluator();
+        var useCase = new AnalyzeDrawingUseCase(new MockGeminiService(data), evaluator);
+
+        var report = await useCase.ExecuteAsync("drawing.pdf", "valid-base64", skill);
+
+        Assert.False(report.IsValid);
+        Assert.Single(report.Errors);
+        Assert.Equal("Warning: Declared mass in note (100kg) deviates by more than 5% from BOM items total (80kg).", report.Errors[0]);
+    }
+
+    [Fact]
+    public async Task DynamicErrorMessageInterpolation_InterpolatesItemLevelRuleParameters()
+    {
+        var data = new ExtractedDrawingData
+        {
+            Metadata = new DrawingMetadata
+            {
+                Cliente = "Test Client",
+                NumeroDesenho = "DWG-100",
+                DesenhadoPor = "Eng",
+                AprovadoPor = "Lead",
+                MassaTotalNotaKg = 50.0
+            },
+            BomItems =
+            [
+                new ExtractedBomItem
+                {
+                    Item = 3,
+                    Quantidade = 1,
+                    ComprimentoBomMm = 620.0,
+                    DiametroBomMm = 450.0,
+                    EspessuraBomMm = 3.0,
+                    PossuiBalaoNasVistas = true
+                }
+            ],
+            Dimensions =
+            [
+                new ExtractedDimension
+                {
+                    BalaoRef = 3,
+                    CotaBaseMm = 500.0,
+                    PossuiSobremetal = true,
+                    ValorSobremetalMm = 120.0, // Invalid: not 100mm
+                    DiametroVistaMm = 400.0,   // Invalid: 400 != 450
+                    EspessuraVistaMm = 2.0     // Invalid: 2 != 3
+                }
+            ]
+        };
+
+        var skill = new VerificationSkill
+        {
+            Name = "Dynamic Item Error Message Test",
+            Rules =
+            [
+                new ValidationRule(
+                    Guid.NewGuid(),
+                    "Overmetal Must Be 100mm",
+                    "if(PossuiSobremetal, ValorSobremetal == 100, true)",
+                    "[Balloon {BalaoRef}] Out of standard: Overmetal indicated on view is {ValorSobremetal}mm (Expected: 100mm)."),
+
+                new ValidationRule(
+                    Guid.NewGuid(),
+                    "Overmetal Length Math",
+                    "if(PossuiSobremetal && CotaBase > 0 && ComprimentoBom > 0, ComprimentoBom == CotaBase + 100, true)",
+                    "[Balloon {BalaoRef}] BOM cut length does not match view dimension. (View: {CotaBase} + 100. BOM: {ComprimentoBom}mm)."),
+
+                new ValidationRule(
+                    Guid.NewGuid(),
+                    "Diameter Match (View vs BOM)",
+                    "if(DiametroVista > 0 && DiametroBom > 0, DiametroVista == DiametroBom, true)",
+                    "[Balloon {BalaoRef}] Diameter mismatch. (View: Ø{DiametroVista}. BOM: Ø{DiametroBom})."),
+
+                new ValidationRule(
+                    Guid.NewGuid(),
+                    "Thickness Match (View vs BOM)",
+                    "if(EspessuraVista > 0 && EspessuraBom > 0, EspessuraVista == EspessuraBom, true)",
+                    "[Balloon {BalaoRef}] Sheet thickness mismatch. (View: #{EspessuraVista}. BOM: #{EspessuraBom}).")
+            ]
+        };
+
+        var evaluator = new NCalcRuleEvaluator();
+        var useCase = new AnalyzeDrawingUseCase(new MockGeminiService(data), evaluator);
+
+        var report = await useCase.ExecuteAsync("drawing.pdf", "valid-base64", skill);
+
+        Assert.False(report.IsValid);
+        Assert.Equal(4, report.Errors.Count);
+
+        Assert.Contains(report.Errors, e => e == "[Balloon 3] Out of standard: Overmetal indicated on view is 120mm (Expected: 100mm).");
+        Assert.Contains(report.Errors, e => e == "[Balloon 3] BOM cut length does not match view dimension. (View: 500 + 100. BOM: 620mm).");
+        Assert.Contains(report.Errors, e => e == "[Balloon 3] Diameter mismatch. (View: Ø400. BOM: Ø450).");
+        Assert.Contains(report.Errors, e => e == "[Balloon 3] Sheet thickness mismatch. (View: #2. BOM: #3).");
     }
 }

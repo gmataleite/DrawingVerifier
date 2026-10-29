@@ -136,9 +136,15 @@ public class AnalyzeDrawingUseCase
             {
                 if (!_ruleEvaluator.Evaluate(rule, documentParameters, out var errorMessage))
                 {
-                    if (!string.IsNullOrWhiteSpace(errorMessage))
+                    var rawTemplate = errorMessage?.StartsWith("Rule syntax error", StringComparison.OrdinalIgnoreCase) == true
+                        ? errorMessage
+                        : (!string.IsNullOrWhiteSpace(rule.ErrorMessage) ? rule.ErrorMessage : errorMessage ?? string.Empty);
+
+                    var interpolatedMessage = InterpolateErrorMessage(rawTemplate, documentParameters);
+
+                    if (!string.IsNullOrWhiteSpace(interpolatedMessage))
                     {
-                        report.Errors.Add(errorMessage);
+                        report.Errors.Add(interpolatedMessage);
                     }
                 }
             }
@@ -201,9 +207,25 @@ public class AnalyzeDrawingUseCase
                     {
                         if (!_ruleEvaluator.Evaluate(rule, itemParameters, out var errorMessage))
                         {
-                            if (!string.IsNullOrWhiteSpace(errorMessage))
+                            var rawTemplate = errorMessage?.StartsWith("Rule syntax error", StringComparison.OrdinalIgnoreCase) == true
+                                ? errorMessage
+                                : (!string.IsNullOrWhiteSpace(rule.ErrorMessage) ? rule.ErrorMessage : errorMessage ?? string.Empty);
+
+                            var interpolatedMessage = InterpolateErrorMessage(rawTemplate, itemParameters);
+
+                            if (!string.IsNullOrWhiteSpace(interpolatedMessage))
                             {
-                                report.Errors.Add($"[Balloon {balloonRefInt.Value}] {errorMessage}");
+                                if (interpolatedMessage.StartsWith($"[Balloon {balloonRefInt.Value}]", StringComparison.OrdinalIgnoreCase) ||
+                                    interpolatedMessage.StartsWith($"[Balão {balloonRefInt.Value}]", StringComparison.OrdinalIgnoreCase) ||
+                                    interpolatedMessage.StartsWith("[Balloon", StringComparison.OrdinalIgnoreCase) ||
+                                    interpolatedMessage.StartsWith("[Balão", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    report.Errors.Add(interpolatedMessage);
+                                }
+                                else
+                                {
+                                    report.Errors.Add($"[Balloon {balloonRefInt.Value}] {interpolatedMessage}");
+                                }
                             }
                         }
                     }
@@ -213,6 +235,21 @@ public class AnalyzeDrawingUseCase
 
         report.IsValid = report.Errors.Count == 0;
         return report;
+    }
+
+    private string InterpolateErrorMessage(string template, Dictionary<string, object> parameters)
+    {
+        if (string.IsNullOrWhiteSpace(template) || parameters == null)
+        {
+            return template ?? string.Empty;
+        }
+
+        foreach (var key in parameters.Keys)
+        {
+            template = template.Replace($"{{{key}}}", parameters[key]?.ToString() ?? "null", StringComparison.OrdinalIgnoreCase);
+        }
+
+        return template;
     }
 
     private static bool IsItemLevelRule(ValidationRule rule)
