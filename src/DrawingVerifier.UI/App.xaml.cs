@@ -19,19 +19,54 @@ public partial class App : System.Windows.Application
 {
     private ServiceProvider? _serviceProvider;
 
+    public App()
+    {
+        AppDomain.CurrentDomain.UnhandledException += (sender, args) =>
+        {
+            var ex = args.ExceptionObject as Exception;
+            MessageBox.Show(
+                $"A fatal error occurred:\n\n{ex?.Message}\n\n{ex?.StackTrace}",
+                "Drawing Verifier - Error",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        };
+
+        DispatcherUnhandledException += (sender, args) =>
+        {
+            MessageBox.Show(
+                $"An unhandled application error occurred:\n\n{args.Exception.Message}\n\n{args.Exception.StackTrace}",
+                "Drawing Verifier - Error",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+            args.Handled = true;
+        };
+    }
+
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
 
-        var services = new ServiceCollection();
-        ConfigureServices(services);
+        try
+        {
+            var services = new ServiceCollection();
+            ConfigureServices(services);
 
-        _serviceProvider = services.BuildServiceProvider();
+            _serviceProvider = services.BuildServiceProvider();
 
-        SeedDatabase(_serviceProvider);
+            SeedDatabase(_serviceProvider);
 
-        var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
-        mainWindow.Show();
+            var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
+            mainWindow.Show();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                $"Failed to start Drawing Verifier:\n\n{ex.Message}\n\n{ex.StackTrace}",
+                "Drawing Verifier - Startup Error",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+            Shutdown(1);
+        }
     }
 
     private static void ConfigureServices(IServiceCollection services)
@@ -60,7 +95,7 @@ public partial class App : System.Windows.Application
         {
             // Seeding is a convenience; the app must still start if the database is unavailable.
             MessageBox.Show(
-                $"Failed to seed the default skills: {ex.Message}",
+                $"Failed to seed default skills: {ex.Message}",
                 "Drawing Verifier",
                 MessageBoxButton.OK,
                 MessageBoxImage.Warning);
