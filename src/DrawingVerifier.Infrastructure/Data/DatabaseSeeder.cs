@@ -94,51 +94,63 @@ public static class DatabaseSeeder
     [
         new ValidationRule(
             Guid.NewGuid(),
-            "MassNoteCheck",
-            "MassaTotalNotaKg > 0",
-            "CRITICAL: Total mass note is missing, zero, or N/A."),
-
-        new ValidationRule(
-            Guid.NewGuid(),
-            "TitleBlockCheck",
+            "Check Title Block Fields",
             "CamposLegendaVaziosCount == 0",
-            "Title block has empty mandatory fields (Client, Drawing Number, Drawn By, or Approved By)."),
+            "Mandatory title block information is missing. Check: Client, Drawing No., Drawn By, or Approved By."),
 
         new ValidationRule(
             Guid.NewGuid(),
-            "ConnectionEndsCheck",
-            "ExtremidadesSemConexao == 0",
-            "There are duct ends without connection leader notes."),
+            "Check Total Mass Note",
+            "MassaTotalNotaKg > 0",
+            "CRITICAL: The APPROXIMATE TOTAL MASS note is missing, zero, or N/A. Update with 3D model value."),
 
         new ValidationRule(
             Guid.NewGuid(),
-            "StandardBlocksCheck",
-            "PossuiBlocoSoldaTopo && PossuiBlocoReferenciaChapas",
-            "Missing mandatory standard blocks (Butt Weld or Sheet Reference)."),
+            "Compare Mass (BOM vs Note)",
+            "if(MassaTotalNotaKg > 0 && SomaMassaBomKg > 0, Abs(MassaTotalNotaKg - SomaMassaBomKg) < (MassaTotalNotaKg * 0.05), true)",
+            "Warning: Declared mass in note ({MassaTotalNotaKg}kg) deviates by more than 5% from BOM items total ({SomaMassaBomKg}kg)."),
 
         new ValidationRule(
             Guid.NewGuid(),
-            "OvermetalStandard100mm",
+            "Overmetal Must Be 100mm",
             "if(PossuiSobremetal, ValorSobremetal == 100, true)",
-            "Overmetal indicated on view is not the standard 100mm."),
+            "[Balloon {BalaoRef}] Out of RELCO standard: Overmetal indicated on view is {ValorSobremetal}mm (Expected: 100mm)."),
 
         new ValidationRule(
             Guid.NewGuid(),
-            "OvermetalLengthMatch",
+            "Overmetal Length Math",
             "if(PossuiSobremetal && CotaBase > 0 && ComprimentoBom > 0, ComprimentoBom == CotaBase + 100, true)",
-            "BOM length does not match View Base Dimension + 100mm overmetal."),
+            "[Balloon {BalaoRef}] BOM cut length does not match view dimension. (View: {CotaBase} + 100. BOM: {ComprimentoBom}mm)."),
 
         new ValidationRule(
             Guid.NewGuid(),
-            "DiameterMatch",
+            "Diameter Match (View vs BOM)",
             "if(DiametroVista > 0 && DiametroBom > 0, DiametroVista == DiametroBom, true)",
-            "View internal diameter does not match BOM diameter."),
+            "[Balloon {BalaoRef}] Diameter mismatch. (View: Ø{DiametroVista}. BOM: Ø{DiametroBom})."),
 
         new ValidationRule(
             Guid.NewGuid(),
-            "ThicknessMatch",
+            "Thickness Match (View vs BOM)",
             "if(EspessuraVista > 0 && EspessuraBom > 0, EspessuraVista == EspessuraBom, true)",
-            "View wall thickness does not match BOM sheet thickness.")
+            "[Balloon {BalaoRef}] Sheet thickness mismatch. (View: #{EspessuraVista}. BOM: #{EspessuraBom})."),
+
+        new ValidationRule(
+            Guid.NewGuid(),
+            "Mandatory Standard Blocks",
+            "PossuiBlocoSoldaTopo && PossuiBlocoReferenciaChapas && PossuiBlocoRugosidade",
+            "Missing mandatory standard blocks on sheet (Butt Weld, Sheet Reference, or 0.8µm Roughness)."),
+
+        new ValidationRule(
+            Guid.NewGuid(),
+            "Orphan Connection Ends",
+            "ExtremidadesSemConexao == 0",
+            "There are duct ends without leader notes indicating connection/interface points."),
+
+        new ValidationRule(
+            Guid.NewGuid(),
+            "All BOM Items Ballooned",
+            "ItensBomSemBalaoCount == 0",
+            "There are {ItensBomSemBalaoCount} item(s) in the Bill of Materials without indicative balloons on the views.")
     ];
 
     /// <summary>
@@ -167,7 +179,7 @@ public static class DatabaseSeeder
         else
         {
             // Automatic migration: If the existing skill has old legacy rules or schema, upgrade it
-            if (existingSkill.Rules.Count < 5 || !existingSkill.OutputSchemaJson.Contains("diametroBomMm", StringComparison.OrdinalIgnoreCase))
+            if (existingSkill.Rules.Count < 10 || !existingSkill.OutputSchemaJson.Contains("diametroBomMm", StringComparison.OrdinalIgnoreCase))
             {
                 existingSkill.SystemPrompt = DefaultSystemPrompt;
                 existingSkill.OutputSchemaJson = DefaultOutputSchemaJson;
