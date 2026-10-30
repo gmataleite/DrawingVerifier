@@ -42,7 +42,7 @@ public class MainViewModelTests
         public void SaveApiKey(string apiKey) { }
         public bool GetEnableHighDpiTiling() => true;
         public void SetEnableHighDpiTiling(bool enabled) { }
-        public string GetSelectedGeminiModel() => "gemini-2.5-flash";
+        public string GetSelectedGeminiModel() => "gemini-3.8-flash";
         public void SetSelectedGeminiModel(string model) { }
     }
 

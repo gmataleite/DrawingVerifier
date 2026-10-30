@@ -17,13 +17,13 @@ public partial class SettingsViewModel : ObservableObject
     private bool _enableHighDpiTiling = true;
 
     [ObservableProperty]
-    private string _selectedGeminiModel = "gemini-2.5-flash";
+    private string _selectedGeminiModel = "gemini-3.8-flash";
 
     public IReadOnlyList<string> AvailableGeminiModels { get; } =
     [
-        "gemini-2.5-flash",
-        "gemini-2.5-pro",
-        "gemini-3.1-flash-lite"
+        "gemini-3.8-flash",
+        "gemini-4-argon",
+        "gemini-3.5-flash-lite"
     ];
 
     public Action? CloseAction { get; set; }

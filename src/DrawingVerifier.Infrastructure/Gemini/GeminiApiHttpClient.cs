@@ -15,7 +15,7 @@ using DrawingVerifier.Infrastructure.Services;
 /// </summary>
 public class GeminiApiHttpClient : IGeminiApiService
 {
-    public const string DefaultGeminiModel = "gemini-2.5-flash";
+    public const string DefaultGeminiModel = "gemini-3.8-flash";
 
     private readonly HttpClient _httpClient;
     private readonly ISettingsService _settingsService;
