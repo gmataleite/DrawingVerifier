@@ -483,14 +483,14 @@ public class AnalyzeDrawingUseCaseTests
 
             // Default checks
             Assert.True(settings.GetEnableHighDpiTiling());
-            Assert.Equal("gemini-2.5-flash", settings.GetSelectedGeminiModel());
+            Assert.Equal("gemini-3.8-flash", settings.GetSelectedGeminiModel());
 
             // Update checks
             settings.SetEnableHighDpiTiling(false);
-            settings.SetSelectedGeminiModel("gemini-2.5-pro");
+            settings.SetSelectedGeminiModel("gemini-4-argon");
 
             Assert.False(settings.GetEnableHighDpiTiling());
-            Assert.Equal("gemini-2.5-pro", settings.GetSelectedGeminiModel());
+            Assert.Equal("gemini-4-argon", settings.GetSelectedGeminiModel());
         }
         finally
         {

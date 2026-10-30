@@ -15,7 +15,7 @@ public class WindowsSettingsService : ISettingsService
     private const string SettingsFileName = "settings.dat";
     private const string PreferencesFileName = "appsettings.json";
 
-    public const string DefaultGeminiModel = "gemini-2.5-flash";
+    public const string DefaultGeminiModel = "gemini-3.8-flash";
 
     private readonly string _settingsFilePath;
     private readonly string _preferencesFilePath;
